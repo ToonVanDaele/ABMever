@@ -1,7 +1,7 @@
 ### ABM functions
-
-# initialisation
-abm_init <- function(init_agecls){
+#----------------------------------------------------------------
+# initialisation (time base = year)
+abm_init_y <- function(init_agecls){
   boar <- createTurtles(n = length(init_agecls), world = dummy,
                         breed = "wildboar",
                         color = rep("red", length(init_agecls)))
@@ -11,9 +11,28 @@ abm_init <- function(init_agecls){
                      tVal = init_agecls)
 }
 
+#--------------------------------------------------------------
+# initialisation (time base = month)
 
-## natural death
-death <- function(turtles, S) {
+abm_init_m <- function(init_agecls){
+  boar <- createTurtles(n = length(init_agecls), world = dummy,
+                        breed = "wildboar",
+                        color = rep("red", length(init_agecls)))
+  boar <- turtlesOwn(turtles = boar, tVar = "age",
+                     tVal = init_agecls * 12)
+  boar <- turtlesOwn(turtles = boar, tVar = "agecl",
+                     tVal = init_agecls)
+}
+
+----------------------------------------------------------------------
+## natural death (independent of time base)
+#
+# @param turtles
+# @param S vector with survival per age class
+
+# Make sure survival is correct for the given time base
+
+mortality <- function(turtles, S) {
   # Select wildboars (newborns don't die -> analoog aan matrix model)
   t2 <- NLwith(agents = turtles, var = "breed", val = "wildboar")
   who_t2 <- of(agents = t2, var = "who") # don't include newborns
@@ -24,7 +43,14 @@ death <- function(turtles, S) {
   return(turtles)
 }
 
-# hunting
+#-------------------------------------------------------------------
+# hunting (independent of time base)
+#
+# @param turtles
+# @param H vector with hunting probabilities for each age class
+#
+# Make sure the hunting probability is correct for the given time base
+#
 hunt <- function(turtles, H) {
   # Select wildboars (newborns don't die -> analoog aan matrix model)
   t2 <- NLwith(agents = turtles, var = "breed", val = "wildboar")
@@ -36,7 +62,14 @@ hunt <- function(turtles, H) {
   return(turtles)
 }
 
-## reproduction
+--------------------------------------------------------------------
+## reproduction (independent of time step)
+#
+# @param turtles turtles object
+# @param F vector with reproduction for each class
+
+# Make sure reproduction values are correct for the given time base
+
 reproduce <- function(turtles, F) {
   whoTurtles <- of(agents = turtles, var = "who") # get all turtles
   ageTurtle <- of(agents = turtles, var = "agecl")
@@ -54,8 +87,9 @@ reproduce <- function(turtles, F) {
   return(turtles)
 }
 
-## aging
-aging <- function(turtles){
+---------------------------------------------------------
+## aging (time step = one year)
+aging_y <- function(turtles){
   # Newbborns become wildboars
   newborn <- NLwith(agents = turtles, var = "breed", val = "newborn")
   turtles <- NLset(turtles = turtles, agents = newborn,
@@ -65,6 +99,21 @@ aging <- function(turtles){
   # All agecl + 1 (max = 2)
   turtles@.Data[, "agecl"] <- turtles@.Data[, "agecl"] + 1
   turtles@.Data[turtles@.Data[,"agecl"] > 2, "agecl"] <- 2
+  return(turtles)
+}
+
+--------------------------------------------------------------------
+## aging (time step = one month)
+aging_m <- function(turtles){
+  # Newbborns become wildboars
+  newborn <- NLwith(agents = turtles, var = "breed", val = "newborn")
+  turtles <- NLset(turtles = turtles, agents = newborn,
+                   var = "breed", val = "wildboar")
+  # All age + 1 (month)
+  turtles@.Data[, "age"] <- turtles@.Data[, "age"] + 1
+  # Set agecl
+  turtles@.Data[turtles@.Data[, "age"] > 12, "agecl"] <- 1
+  turtles@.Data[turtles@.Data[, "age"] > 24, "agecl"] <- 2
   return(turtles)
 }
 
