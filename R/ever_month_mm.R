@@ -4,13 +4,13 @@
 library(tidyverse)
 library(NetLogoR)
 library(popbio)
-source("functions_month.R")
+source("R/functions.R")
 
 # Population
 ageclasses <- c("Juvenile", "Yearling", "Adult")
 
 S <- c(0.6, 0.7, 0.8) # yearly survival probability
-F <- c(0.2, 0.0, 0.3) # yearly fertility
+F <- c(0.0, 0.2, 0.5) # yearly fertility
 H <- c(0.0, 0.0, 0.0) # yearly hunting mortality
 
 nboar <- 1000    # total population at time = 0
@@ -68,7 +68,6 @@ ggplot(mms, aes(x = time, y = n, group = ageclass, color = ageclass)) +
   geom_line(data = mmms, aes(x = time / 12), size = 0.3)
 
 
-
 #---------------------------------
 # ABM model - monthly
 
@@ -84,7 +83,7 @@ dummy <- createWorld(minPxcor = -5, maxPxcor = 5, minPycor = -5, maxPycor = 5)
 sim <- function(){
 
   # initialisation
-  boar <- abm_init(init_agecls = init_agecls)
+  boar <- abm_init_m(init_agecls = init_agecls)
 
   numboar <- matrix(0, ncol = 6, nrow = max_year * 12 + 1,
                     dimnames = list(NULL,
@@ -97,10 +96,10 @@ sim <- function(){
 
   while (NLany(boar) & NLcount(boar < 5000) & year <= max_year) {
 
-    #if (month == 12) boar <- hunt(boar, H)
+    #boar <- hunt(boar, H)
     boar <- reproduce(boar, F/12)
-    boar <- death(boar, S^(1/12))
-    boar <- aging(boar)
+    boar <- mortality(boar, S^(1/12))
+    boar <- aging_m(boar)
 
     # track number of individuals in each age class
     numboar[time + 1,] <- c(time, year, month,
@@ -123,10 +122,12 @@ sim <- function(){
 
   return(list(numboar = as.data.frame(numboar),
               age_distr = age_distr))
+  cat("-")  # dit werkt niet
 }
 
 temp <- sim()
 
+#--------------------------------------------------------------
 # Run simulation nsim times
 outsim <- rerun(.n = nsim, sim())
 
@@ -158,7 +159,72 @@ df_age_distr <- outsim %>%
 ggplot(df_age_distr, aes(x = age, group = sim)) + geom_density()
 
 
+#-------------------------------------------------------------
+# Hunting and Fertility differentiated in time
 
-x <-  rep(0.1, 4)
-mean(x)
-exp(mean(log(x)))
+Hm <- set_H()
+Hm
+
+Fm <- set_F()
+Fm
+
+sim_h <- function(){
+
+  # initialisation
+  boar <- abm_init_m(init_agecls = init_agecls)
+  numboar <- numboar_init2()
+  numboar[1, 4:9] <- get_track(boar)
+
+  time <- 1
+  year <- 1
+  month <- 1   # In welke maand starten?
+
+  while (NLany(boar) & NLcount(boar) < 5000 & year <= max_year) {
+
+    boar <- hunt(turtles = boar, H = Hm[month,])
+    boar <- reproduce(boar, Fm[month,])
+    boar <- mortality(boar, S^(1/12))
+    boar <- aging_m(boar)
+
+    # track number of individuals in each age class
+    d <- get_track(boar)
+    numboar[time + 1,1:3] <- c(time, year, month)
+    for (i in 1:length(d)) numboar[time + 1, colnames(d)[i]] <- d[i]
+
+    time <- time + 1
+    month <- month + 1
+    if (month > 12) {
+      month <- 1
+      year <- year + 1
+    }
+    print(year)
+  }
+
+  # store age distribution at the end of the simulation
+  age_distr <- boar@.Data %>%
+    as.data.frame() %>%
+    dplyr::select(age, agecl)
+
+  return(list(numboar = as.data.frame(numboar),
+              age_distr = age_distr))
+}
+
+out <- sim_h()
+
+df_out <- out$numboar %>%
+  pivot_longer(cols = -c("time", "year", "month"), names_to = "agecl", values_to = "n")
+
+ggplot(df_out, aes(x = time, y = n, colour = agecl)) + geom_line()
+
+
+###---------------------------------
+
+# Vragen
+
+#- In welke maand start het model? Beter jaarkalender of modelkalender?
+#- Initiële verdeling van de leeftijden en geslacht
+#- Jacht per maand -> hoe intensiteit uitdrukken? % afschot per maand? verschil male female
+#- Jacht veranderlijk per gewicht -> groeifunctie?
+#- periode tussen twee drachten? een jaar? gemiddeld aantal newborns?
+#- realistische periode (maanden) voor F>0
+#-
