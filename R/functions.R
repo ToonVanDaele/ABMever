@@ -20,16 +20,25 @@ abm_init_y <- function(init_agecls){
 # Dit geeft in de eerste tijdstappn een scheve leeftijdsdistributie
 # Welke alternatieve initiële leeftijdsdistributies zijn mogelijk?
 
-abm_init_m <- function(init_agecls){
-  boar <- createTurtles(n = length(init_agecls), world = dummy,
+abm_init_m <- function(init_age){
+  boar <- createTurtles(n = length(init_age), world = dummy,
                         breed = "wildboar",
-                        color = rep("red", length(init_agecls)))
+                        color = rep("red", length(init_age)))
   boar <- turtlesOwn(turtles = boar, tVar = "sex",
-                     tVal = sample(c("F", "M"), size = length(init_agecls), replace = TRUE))
+                     tVal = sample(c("F", "M"), size = length(init_age), replace = TRUE))
   boar <- turtlesOwn(turtles = boar, tVar = "age",
-                     tVal = init_agecls * 12)
+                     tVal = init_age)
+
+  init_age_cl <- init_age %>%
+    as.data.frame() %>%
+    mutate(agecl = case_when(. > 24 ~ 2,
+                             . > 12 ~ 1,
+                             TRUE ~ 0)) %>%
+    pull(agecl)
+
   boar <- turtlesOwn(turtles = boar, tVar = "agecl",
-                     tVal = init_agecls)
+                     tVal = init_age_cl)
+  return(boar)
 }
 
 # Numboar init
@@ -66,6 +75,20 @@ get_track <- function(turtles){
   return(df)
 }
 
+get_boar <- function(turtles){
+
+  df <- turtles@.Data %>%
+    as.data.frame() %>%
+    mutate(agecl = ifelse(agecl == -1, 0, agecl)) %>%   # aanpassen newborns = juvenile !!!!
+    group_by(sex, agecl) %>%
+    summarise(n = n(), .groups = "drop") %>%
+    mutate(sex = turtles@levels$sex[sex],
+           agecl = ageclasses[agecl + 1])
+  return(df)
+}
+
+
+
 #------------------------------------------------------------
 # init H
 set_H <- function(){
@@ -83,13 +106,23 @@ set_H <- function(){
 }
 
 # init F
-set_F <- function(){
+set_F <- function(F = F){
+  # Fm <- matrix(data = c(seq(from = 1, to = 12),
+  #                       rep(0, 12),
+  #                       rep(0.05, 12),
+  #                       rep(0.1, 12)),
+  #              nrow = 12, ncol = 4,
+  #              dimnames = list(NULL, c("month", ageclasses)))
+
+
+  birth_month <- get_birth_month()
+
   Fm <- matrix(data = c(seq(from = 1, to = 12),
-                        rep(0, 12),
-                        rep(0.05, 12),
-                        rep(0.1, 12)),
+                        rep(birth_month$perc / 100, 3)),
                nrow = 12, ncol = 4,
                dimnames = list(NULL, c("month", ageclasses)))
+  Fm[,2:4] <- t(t(Fm[,2:4]) * F)
+
   return(Fm)
 }
 
@@ -121,15 +154,20 @@ mortality <- function(turtles, S) {
 #
 # Make sure the hunting probability is correct for the given time base
 #
-hunt <- function(turtles, H) {
-  # Select wildboars (newborns don't die -> analoog aan matrix model)
+hunt <- function(turtles, H, time) {
+  # Select wildboars only (newborns are not hunted -> analoog aan matrix model)
   t2 <- NLwith(agents = turtles, var = "breed", val = "wildboar")
   who_t2 <- of(agents = t2, var = "who") # newborns not included
   age_t2 <- of(agents = t2, var = "agecl") # get ages
   sex_t2 <- of(agents = t2, var = "sex") # get sex
-  s <- ifelse(sex_t2 == "F", 2, 5)  # select female of male column
+  s <- ifelse(sex_t2 == "F", 2, 5)  # select female or male column
   tdie <- rbinom(n = NLcount(t2), size = 1, prob = H[age_t2 + s])
   who_dies <- who_t2[tdie == 1]    # ID's of hunted turtles
+
+  # track hunted individuals
+  harvest <- NLwith(agents = turtles, var = "who", val = who_dies)
+  trackhunt[[time]] <<- get_boar(harvest)
+
   turtles <- die(turtles = turtles, who = who_dies) # remove from list
   return(turtles)
 }
@@ -193,3 +231,19 @@ aging_m <- function(turtles){
   return(turtles)
 }
 
+#----------------------------------------------------------------------
+# Get geboortepiek
+
+get_birth_month <- function(){
+
+#  filename <- "https://raw.githubusercontent.com/inbo/fis-projecten/305-rerun-geboortepiek/Grofwild/Populatiemodel-Everzwijn/Output/Geboortepiek/bp_results_1month.csv?token=GHSAT0AAAAAABYGSVSY725WYIFIZ4K4DKM6YZ23W6Q"
+
+# df <- read.csv(file = filename)
+# write.csv(df, file = "./data/interim/birth_month.csv")
+
+df <- read.csv(file = "./data/interim/birth_month.csv")
+
+  df <- df %>%
+    dplyr::select(month = bin, perc = per)
+  return(df)
+  }

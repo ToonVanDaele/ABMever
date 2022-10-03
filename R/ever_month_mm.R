@@ -1,111 +1,91 @@
-# Tryout ever met NetlogoR
-# Vergelijking van de resultaten met een matrix model en ABM
+# Base model for wild boar with NetlogoR
+#
+# time base: monthly
 
 library(tidyverse)
 library(NetLogoR)
 library(popbio)
 source("R/functions.R")
 
-# Population
+# Global population properties
 ageclasses <- c("Juvenile", "Yearling", "Adult")
 
+nboar <- 1000    # total population at time = 0
+max_year <- 10   # number of years to simulate
+nsim <- 10       # number of simulations
+
+# Initial population matrix (yearly)
 S <- c(0.6, 0.7, 0.8) # yearly survival probability
 F <- c(0.0, 0.2, 0.5) # yearly fertility
 H <- c(0.0, 0.0, 0.0) # yearly hunting mortality
 
-nboar <- 1000    # total population at time = 0
-max_year <- 15   # number of years to simulate
-nsim <- 20       # number of simulations
-
-#---------------------------------
-# Matrix model (yearly)
+# Matrix model
+# Used to asses the initial age distribution (based on stable stage)
 mat <- matrix(c(F[1], F[2],	F[3],
                 S[1], 0,  	0,
                 0,    S[2],	S[3]), ncol = 3, byrow = TRUE)
-
 mat_h <- t(t(mat) * (1 - H))
 
-init_agecl <- stable.stage(mat_h) * nboar   # initial age class = stable stage
-mm <- pop.projection(A = mat_h, n = init_agecl, iterations = max_year)
-rownames(mm$stage.vectors) <- ageclasses
-
-# Process output
-mms <- mm$stage.vectors %>%
-  t() %>%
-  as.data.frame() %>%
-  mutate(time = row_number() - 1,
-         sim = "mm") %>%
-  pivot_longer(cols = all_of(ageclasses),
-               names_to = "ageclass", values_to = "n" )
-
-#---------------------------------
-# Matrix model (monthly)
-Sm <- S^(1/12)
-Fm <- F / 12
-p <- 11/12
-matm <- matrix(c(Fm[1] + Sm[1] * p, Fm[2],	         Fm[3],
-                 Sm[1] * (1 - p),   Sm[2] * p,       0,
-                 0,                 Sm[2] * (1 - p), Sm[3]), ncol = 3, byrow = TRUE)
-
-matm_h <- t(t(matm) * (1 - H^(1/12)))
-
-#init_agecl <- stable.stage(matm_h) * nboar   # initial age class = stable stage
-mmm <- pop.projection(A = matm_h, n = init_agecl, iterations = max_year * 11)
-rownames(mmm$stage.vectors) <- ageclasses
-
-# Process output
-mmms <- mmm$stage.vectors %>%
-  t() %>%
-  as.data.frame() %>%
-  mutate(time = row_number() - 1,
-         sim = "mm") %>%
-  pivot_longer(cols = all_of(ageclasses),
-               names_to = "ageclass", values_to = "n" )
-
-# Plot matrix yearly and by month
-ggplot(mms, aes(x = time, y = n, group = ageclass, color = ageclass)) +
-  geom_line(size = 1) +
-  geom_line(data = mmms, aes(x = time / 12), size = 0.3)
+init_agecl <- stable.stage(mat_h) * nboar   # initial number by age class
 
 
-#---------------------------------
-# ABM model - monthly
+#----------------------------------------------------------------------
+# Initial ABM population
 
-init_agecls <- c(rep(0, init_agecl[1]),
-                 rep(1, init_agecl[2]),
-                 rep(2, init_agecl[3]))  # initial ages for all individuals
+# init_agecls <- c(rep(0, init_agecl[1]),
+#                  rep(1, init_agecl[2]),
+#                  rep(2, init_agecl[3]))  # initial ages for all individuals
+
+# nog te verbeteren met een fit
+init_age <- rgamma(n = nboar, shape = 2, rate = 0.8) * 12
 
 # Create world (required, but not used)
 dummy <- createWorld(minPxcor = -5, maxPxcor = 5, minPycor = -5, maxPycor = 5)
 
+# Hunting differentiated in time
+Hm <- set_H()
+Hm
 
-## The ABM packed in a function
-sim <- function(){
+# Een maandelijks afschot tracken
+# Jachtdruk bepaald
+# Bijkomend differentiëren met leefijd (vb juveniel <3 maand en > 3maand)
+# Alternatieve jachtdruk in aantallen per jaar -> iteratief -> quota
+# Vooral belangrijk om verschillende scenario's te kunnen vergelijken
+# Wel cijfers over verhoudingen bij afschot / niet de percentage tov van wat
+# er rondloopt.
+
+# Fertility differentiated in time
+Fm <- set_F(F = F)
+Fm
+
+# Reproductie op basis van effectieve leeftijd ipv leeftijdsklasse
+
+# vb. reproductie minimum 10 maanden (minimum gewicht) + geboortepiek in maart
+
+# -> geboortepiek percentage tov totaal jaar
+
+sim_h <- function(){
 
   # initialisation
-  boar <- abm_init_m(init_agecls = init_agecls)
-
-  numboar <- matrix(0, ncol = 6, nrow = max_year * 12 + 1,
-                    dimnames = list(NULL,
-                      c("time","year","month", ageclasses)))
-  numboar[1,4:6] <- round(init_agecl)
+  boar <- abm_init_m(init_age = init_age)
+  tracknum <- NULL
+  trackhunt <<- NULL
 
   time <- 1
   year <- 1
-  month <- 1
+  month <- 1   # In welke maand starten?
 
-  while (NLany(boar) & NLcount(boar < 5000) & year <= max_year) {
+  while (NLany(boar) & NLcount(boar) < 5000 & year <= max_year) {
+    print(paste(year, month))
 
-    #boar <- hunt(boar, H)
-    boar <- reproduce(boar, F/12)
+    boar <- hunt(turtles = boar, H = Hm[month,], time)
+    boar <- reproduce(boar, Fm[month,])
     boar <- mortality(boar, S^(1/12))
     boar <- aging_m(boar)
 
     # track number of individuals in each age class
-    numboar[time + 1,] <- c(time, year, month,
-                            sum(boar@.Data[,"agecl"] == 0),
-                            sum(boar@.Data[,"agecl"] == 1),
-                            sum(boar@.Data[,"agecl"] == 2))
+    d <- get_boar(boar)
+    tracknum[[time]] <- d
 
     time <- time + 1
     month <- month + 1
@@ -115,26 +95,45 @@ sim <- function(){
     }
   }
 
+  # Process tracking data
+  # Number of individuals
+  df_numboar <- tracknum %>%
+    map_dfr(rbind, .id = "time") %>%
+    mutate(time = as.integer(time))
+  # harvested individuals
+  df_harvest <- trackhunt %>%
+    map_dfr(rbind, .id = "time") %>%
+    mutate(time = as.integer(time))
+  trackhunt <<- NULL
+
   # store age distribution at the end of the simulation
   age_distr <- boar@.Data %>%
     as.data.frame() %>%
     dplyr::select(age, agecl)
 
-  return(list(numboar = as.data.frame(numboar),
+  return(list(df_numboar = df_numboar, df_harvest = df_harvest,
               age_distr = age_distr))
-  cat("-")  # dit werkt niet
 }
 
-temp <- sim()
+out <- sim_h()
+
+# Number of individuals
+df_num <- out$df_numboar
+ggplot(df_num, aes(x = as.integer(time), y = n, color = paste(agecl, sex))) + geom_line()
+
+# Harvested individuals
+df_hunt <- out$df_harvest
+ggplot(df_hunt, aes(x = as.integer(time), y = n, color = paste(agecl, sex))) + geom_line()
+
 
 #--------------------------------------------------------------
 # Run simulation nsim times
-outsim <- rerun(.n = nsim, sim())
+outsim <- rerun(.n = nsim, sim_h())
 
 # Process output ABM
 df <- outsim %>%
-  map_dfr("numboar", .id = "sim") %>%
-  pivot_longer(cols = all_of(ageclasses), names_to = "agecl", values_to = "n")
+  map_dfr("df_numboar", .id = "sim")
+  #pivot_longer(cols = all_of(ageclasses), names_to = "agecl", values_to = "n")
 
 # Plot all simulations (thick line = matrix model)
 # ggplot(df, aes(x = time, y = n, color = agecl, group = paste(sim, agecl))) +
@@ -143,15 +142,24 @@ df <- outsim %>%
 #                             group = ageclass, color = ageclass), size = 1)
 
 # Plot mean of simulations (thick line = matrix model)
+# df %>%
+#   group_by(time, agecl) %>%
+#   summarise(mean = mean(n),
+#             p90 = quantile(n, prob = 0.9),
+#             p10 = quantile(n, prob = 0.1)) %>%
+#   ggplot(aes(x = time, color = agecl)) +
+#   geom_smooth(aes(y = mean, ymax = p90, ymin = p10), size = 0.5, stat = "identity") +
+#   geom_line(data = mms, aes(x = time * 12, y = n,
+#                             color = ageclass), size = 1)
+
+#Plot mean of simulations
 df %>%
-  group_by(time, agecl) %>%
+  group_by(time, agecl, sex) %>%
   summarise(mean = mean(n),
             p90 = quantile(n, prob = 0.9),
             p10 = quantile(n, prob = 0.1)) %>%
-  ggplot(aes(x = time, color = agecl)) +
-  geom_smooth(aes(y = mean, ymax = p90, ymin = p10), size = 0.5, stat = "identity") +
-  geom_line(data = mms, aes(x = time * 12, y = n,
-                            color = ageclass), size = 1)
+  ggplot(aes(x = time, color = paste(agecl, sex))) +
+  geom_smooth(aes(y = mean, ymax = p90, ymin = p10), size = 0.5, stat = "identity")
 
 # Plot age distribution ABM
 df_age_distr <- outsim %>%
@@ -159,62 +167,6 @@ df_age_distr <- outsim %>%
 ggplot(df_age_distr, aes(x = age, group = sim)) + geom_density()
 
 
-#-------------------------------------------------------------
-# Hunting and Fertility differentiated in time
-
-Hm <- set_H()
-Hm
-
-Fm <- set_F()
-Fm
-
-sim_h <- function(){
-
-  # initialisation
-  boar <- abm_init_m(init_agecls = init_agecls)
-  numboar <- numboar_init2()
-  numboar[1, 4:9] <- get_track(boar)
-
-  time <- 1
-  year <- 1
-  month <- 1   # In welke maand starten?
-
-  while (NLany(boar) & NLcount(boar) < 5000 & year <= max_year) {
-
-    boar <- hunt(turtles = boar, H = Hm[month,])
-    boar <- reproduce(boar, Fm[month,])
-    boar <- mortality(boar, S^(1/12))
-    boar <- aging_m(boar)
-
-    # track number of individuals in each age class
-    d <- get_track(boar)
-    numboar[time + 1,1:3] <- c(time, year, month)
-    for (i in 1:length(d)) numboar[time + 1, colnames(d)[i]] <- d[i]
-
-    time <- time + 1
-    month <- month + 1
-    if (month > 12) {
-      month <- 1
-      year <- year + 1
-    }
-    print(year)
-  }
-
-  # store age distribution at the end of the simulation
-  age_distr <- boar@.Data %>%
-    as.data.frame() %>%
-    dplyr::select(age, agecl)
-
-  return(list(numboar = as.data.frame(numboar),
-              age_distr = age_distr))
-}
-
-out <- sim_h()
-
-df_out <- out$numboar %>%
-  pivot_longer(cols = -c("time", "year", "month"), names_to = "agecl", values_to = "n")
-
-ggplot(df_out, aes(x = time, y = n, colour = agecl)) + geom_line()
 
 
 ###---------------------------------
@@ -228,3 +180,9 @@ ggplot(df_out, aes(x = time, y = n, colour = agecl)) + geom_line()
 #- periode tussen twee drachten? een jaar? gemiddeld aantal newborns?
 #- realistische periode (maanden) voor F>0
 #-
+
+
+# later (eventueel) nog toe te voegen:
+# F proportie reproductie * worpgrootte *
+#? Kans op overleven van moederdier is dit met post-natal survival
+# ? cijfers over dracht bij jacht op basis van embryo's
