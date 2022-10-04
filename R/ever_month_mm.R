@@ -15,7 +15,7 @@ max_year <- 10   # number of years to simulate
 nsim <- 10       # number of simulations
 
 # Initial population matrix (yearly)
-S <- c(0.6, 0.7, 0.8) # yearly survival probability
+S <- c(0.6, 0.8, 0.9) # yearly survival probability
 F <- c(0.0, 0.2, 0.5) # yearly fertility
 H <- c(0.0, 0.0, 0.0) # yearly hunting mortality
 
@@ -46,7 +46,6 @@ dummy <- createWorld(minPxcor = -5, maxPxcor = 5, minPycor = -5, maxPycor = 5)
 Hm <- set_H()
 Hm
 
-# Een maandelijks afschot tracken
 # Jachtdruk bepaald
 # Bijkomend differentiëren met leefijd (vb juveniel <3 maand en > 3maand)
 # Alternatieve jachtdruk in aantallen per jaar -> iteratief -> quota
@@ -62,7 +61,7 @@ Fm
 
 # vb. reproductie minimum 10 maanden (minimum gewicht) + geboortepiek in maart
 
-# -> geboortepiek percentage tov totaal jaar
+
 
 sim_h <- function(){
 

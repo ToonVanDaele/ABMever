@@ -178,17 +178,32 @@ hunt <- function(turtles, H, time) {
 # @param turtles turtles object
 # @param F vector with reproduction for each class
 
+# Only turtles of age > 10 reproduce
 # Make sure reproduction values are correct for the given time base
 
-reproduce <- function(turtles, F) {
-  FTurtles <- NLwith(agents = turtles, var = "sex", val = "F")
-  whoTurtles <- of(agents = FTurtles, var = "who") # get all female turtles ID
-  ageTurtle <- of(agents = FTurtles, var = "agecl") # get age class
-  # Some reproduce (poisson distribution) -> newborns
-  repro <- rpois(n = NLcount(FTurtles), lambda = F[ageTurtle + 2])
+reproduce <- function(turtles = boar, F = Fm[1,]) {
+  # Get female turtles of age > 10 months
 
-  who_repro <- whoTurtles[repro > 0] # ID's of reproducing turtles
-  turtles <- hatch(turtles = turtles, who = who_repro, n = repro[repro > 0],
+  rturtle <- turtles@.Data %>%
+    as_tibble() %>%
+    filter(sex == 1 & age > 10) %>%
+    mutate(n = rpois(n = nrow(.), lambda = F[rturtle$agecl + 2])) %>%
+    filter(n > 0) %>%
+    dplyr::select(who, n)
+
+  # whoTurtles <- turtles@.Data[turtles@.Data[, "sex"] == 1 &
+  #                 turtles@.Data[, "age"] > 10,]
+  # FTurtles <- NLwith(agents = turtles, var = "sex", val = "F")
+  # FTurtles <- NLwith(agents = Fturtles, var = "age", val > 10)
+  #whoTurtles <- of(agents = FTurtles, var = "who") # get all female turtles ID
+  #ageclTurtle <- of(agents = FTurtles, var = "agecl") # get age class
+
+  # Some reproduce (poisson distribution) -> newborns
+  #rturtlerepro <- rpois(n = nrow(rturtle), lambda = F[rturtle$agecl + 2])
+
+  # who_repro <- whoTurtles[repro > 0] # ID's of reproducing turtles
+  #who_repro <- whoTurtles[repro > 0] # ID's of reproducing turtles
+  turtles <- hatch(turtles = turtles, who = rturtle$who, n = rturtle$n,
                    breed = "newborn") # add offspring
   newborn <- NLwith(agents = turtles, var = "breed", val = "newborn")
   turtles <- NLset(turtles = turtles, agents = newborn,
@@ -209,6 +224,7 @@ aging_y <- function(turtles){
                    var = "breed", val = "wildboar")
   # All age + 1
   turtles@.Data[, "age"] <- turtles@.Data[, "age"] + 1
+
   # All agecl + 1 (max = 2)
   turtles@.Data[, "agecl"] <- turtles@.Data[, "agecl"] + 1
   turtles@.Data[turtles@.Data[,"agecl"] > 2, "agecl"] <- 2
