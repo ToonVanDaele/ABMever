@@ -1,0 +1,94 @@
+# Scenario's example
+
+library(tidyverse)
+library(NetLogoR)
+library(popbio)
+source("R/functions.R")
+source("R/functions_sim.R")
+
+#---------------------------------
+# Set population parameters
+
+ageclasses <- c("Juvenile", "Yearling", "Adult")
+
+# Survival
+S <- c(0.6, 0.8, 0.9) # yearly survival probability
+
+# Fertility
+F <- c(0, 0.1, 0.5) # yearly fertility
+Fm <- set_F(F = F, csv_filename = "./data/input/birth_month.csv") # by month
+
+# Hunting (by month)
+# Load all hunting scenario's from excel sheets
+Hscen <- get_hunting_scen(path = "./data/input/hunting_scenarios.xlsx")
+
+# H1 - all equal - all year
+# H2 - all equal - hunting season (sep-march)
+# H3 - adult and yearling only - all year
+# H4 - adult and yearling only - hunting season
+# H5 - male adults all year - yearling during hunting season (sep-march)
+# ...
+
+# Hunting scenarios are stored in a list of dataframes
+# Here we only use H1 & H3
+Hs <- Hscen[c("H1", "H3")]
+
+# ----------------------------------------------------
+# ABM related parameters
+
+nboar0 <- 1000    # initial population size
+max_year <- 10    # number of years to simulate
+nsim <- 2        # number of simulations per scenario
+
+# Set initial age distribution  (nog aan te passen!!)
+init_age <- rgamma(n = nboar0, shape = 2, rate = 0.8) * 12
+
+# Create world (required, but not used)
+dummy <- createWorld(minPxcor = -5, maxPxcor = 5, minPycor = -5, maxPycor = 5)
+
+
+#----------------------------------------------------
+# Put everything together in a list for multiple scenarios
+mypop <- list(init_age = init_age,
+              max_year = max_year,
+              nsim = nsim,
+              S = S,
+              Fm = Fm,
+              Hs = Hs,
+              ageclasses = ageclasses,
+              world = dummy)
+
+# --------------------------------------------------
+# run a single simulation to estimate required time (seconds)
+checktime(mypop)
+
+#-----------------------------------------------------
+# run full simulation
+scen1 <- sim_scen_boar(mypop)
+
+#-----------------------------------------------------
+# process results
+
+df_num <- get_numboar(scen1)
+df_har <- get_harvest(scen1)
+
+#----------------------------------------------------
+# plot
+
+df_num %>%
+  filter(sex == "F") %>%
+  group_by(time, agecl, Hs) %>%
+  summarise(mean = mean(n),
+            p90 = quantile(n, prob = 0.9),
+            p10 = quantile(n, prob = 0.1)) %>%
+  ggplot(aes(x = time, color = paste(agecl, Hs))) +
+  geom_smooth(aes(y = mean, ymax = p90, ymin = p10), size = 0.5, stat = "identity")
+
+df_har %>%
+  filter(sex == "F") %>%
+  group_by(time, agecl, Hs) %>%
+  summarise(mean = mean(n),
+            p90 = quantile(n, prob = 0.9),
+            p10 = quantile(n, prob = 0.1)) %>%
+  ggplot(aes(x = time, color = paste(agecl, Hs))) +
+  geom_smooth(aes(y = mean, ymax = p90, ymin = p10), size = 0.5, stat = "identity")

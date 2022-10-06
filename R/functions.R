@@ -20,7 +20,7 @@ abm_init_y <- function(init_agecls){
 # Dit geeft in de eerste tijdstappn een scheve leeftijdsdistributie
 # Welke alternatieve initiële leeftijdsdistributies zijn mogelijk?
 
-abm_init_m <- function(init_age){
+abm_init_m <- function(init_age, world){
   boar <- createTurtles(n = length(init_age), world = dummy,
                         breed = "wildboar",
                         color = rep("red", length(init_age)))
@@ -104,24 +104,19 @@ set_H <- function(){
                                        paste0(ageclasses, "M"))))
   return(Hm)
 }
+#-------------------------------------------------------------
+# Set Fertility
+#
+# Yearly fertility is distributed over months according
+# monthly birth rates.
+set_F <- function(F = F, csv_filename){
 
-# init F
-set_F <- function(F = F){
-  # Fm <- matrix(data = c(seq(from = 1, to = 12),
-  #                       rep(0, 12),
-  #                       rep(0.05, 12),
-  #                       rep(0.1, 12)),
-  #              nrow = 12, ncol = 4,
-  #              dimnames = list(NULL, c("month", ageclasses)))
+  birth_month <- get_birth_month(csv_filename)
 
-
-  birth_month <- get_birth_month()
-
-  Fm <- matrix(data = c(seq(from = 1, to = 12),
-                        rep(birth_month$perc / 100, 3)),
-               nrow = 12, ncol = 4,
-               dimnames = list(NULL, c("month", ageclasses)))
-  Fm[,2:4] <- t(t(Fm[,2:4]) * F)
+  Fm <- matrix(data = c(rep(birth_month$perc / 100, 3)),
+               nrow = 12, ncol = 3,
+               dimnames = list(NULL, ageclasses))
+  Fm <- t(t(Fm) * F)
 
   return(Fm)
 }
@@ -160,7 +155,7 @@ hunt <- function(turtles, H, time) {
   who_t2 <- of(agents = t2, var = "who") # newborns not included
   age_t2 <- of(agents = t2, var = "agecl") # get ages
   sex_t2 <- of(agents = t2, var = "sex") # get sex
-  s <- ifelse(sex_t2 == "F", 2, 5)  # select female or male column
+  s <- ifelse(sex_t2 == "F", 1, 4)  # select female or male columns
   tdie <- rbinom(n = NLcount(t2), size = 1, prob = H[age_t2 + s])
   who_dies <- who_t2[tdie == 1]    # ID's of hunted turtles
 
@@ -179,32 +174,24 @@ hunt <- function(turtles, H, time) {
 # @param F vector with reproduction for each class
 
 # Only turtles of age > 10 reproduce
+# Newborns have 50/50 sex ratio
 # Make sure reproduction values are correct for the given time base
 
-reproduce <- function(turtles = boar, F = Fm[1,]) {
-  # Get female turtles of age > 10 months
-
+reproduce <- function(turtles = boar, F) {
+  # Select female turtles of age > 10 months
+  # reproduction (n) according to F value of respective age class
   rturtle <- turtles@.Data %>%
-    as_tibble() %>%
+    as.data.frame() %>%
     filter(sex == 1 & age > 10) %>%
-    mutate(n = rpois(n = nrow(.), lambda = F[rturtle$agecl + 2])) %>%
+    mutate(n = rpois(n = nrow(.), lambda = F[.$agecl + 1])) %>%
     filter(n > 0) %>%
     dplyr::select(who, n)
 
-  # whoTurtles <- turtles@.Data[turtles@.Data[, "sex"] == 1 &
-  #                 turtles@.Data[, "age"] > 10,]
-  # FTurtles <- NLwith(agents = turtles, var = "sex", val = "F")
-  # FTurtles <- NLwith(agents = Fturtles, var = "age", val > 10)
-  #whoTurtles <- of(agents = FTurtles, var = "who") # get all female turtles ID
-  #ageclTurtle <- of(agents = FTurtles, var = "agecl") # get age class
-
-  # Some reproduce (poisson distribution) -> newborns
-  #rturtlerepro <- rpois(n = nrow(rturtle), lambda = F[rturtle$agecl + 2])
-
-  # who_repro <- whoTurtles[repro > 0] # ID's of reproducing turtles
-  #who_repro <- whoTurtles[repro > 0] # ID's of reproducing turtles
+  # Hatch (add offspring to the population)
   turtles <- hatch(turtles = turtles, who = rturtle$who, n = rturtle$n,
-                   breed = "newborn") # add offspring
+                   breed = "newborn")
+
+  # Set some variable values for the newborns
   newborn <- NLwith(agents = turtles, var = "breed", val = "newborn")
   turtles <- NLset(turtles = turtles, agents = newborn,
                    var = c("age", "agecl", "sex"),
@@ -221,13 +208,15 @@ aging_y <- function(turtles){
   # Newbborns become wildboars
   newborn <- NLwith(agents = turtles, var = "breed", val = "newborn")
   turtles <- NLset(turtles = turtles, agents = newborn,
-                   var = "breed", val = "wildboar")
+                   var = c("breed", "agecl"),
+                   val = data.frame(breed = "wildboar",
+                                    agecl = 0))
   # All age + 1
   turtles@.Data[, "age"] <- turtles@.Data[, "age"] + 1
 
-  # All agecl + 1 (max = 2)
-  turtles@.Data[, "agecl"] <- turtles@.Data[, "agecl"] + 1
-  turtles@.Data[turtles@.Data[,"agecl"] > 2, "agecl"] <- 2
+  # Set age class
+  turtles@.Data[turtles@.Data[, "age"] > 12, "agecl"] <- 1
+  turtles@.Data[turtles@.Data[, "age"] > 24, "agecl"] <- 2
   return(turtles)
 }
 
@@ -250,16 +239,80 @@ aging_m <- function(turtles){
 #----------------------------------------------------------------------
 # Get geboortepiek
 
-get_birth_month <- function(){
+get_birth_month <- function(csv_filename){
 
 #  filename <- "https://raw.githubusercontent.com/inbo/fis-projecten/305-rerun-geboortepiek/Grofwild/Populatiemodel-Everzwijn/Output/Geboortepiek/bp_results_1month.csv?token=GHSAT0AAAAAABYGSVSY725WYIFIZ4K4DKM6YZ23W6Q"
 
 # df <- read.csv(file = filename)
-# write.csv(df, file = "./data/interim/birth_month.csv")
+# write.csv(df, file = csv_filename")
 
-df <- read.csv(file = "./data/interim/birth_month.csv")
+  df <- read.csv(file = csv_filename)
+
+  if (round(sum(df$per),2) != 100)
+    warning("Sum of monthly birth percentages is not 100%")
 
   df <- df %>%
-    dplyr::select(month = bin, perc = per)
+    dplyr::select(perc = per)
   return(df)
+}
+
+#-----------------------------------------------------------------------
+
+# Get hunting scenario's
+
+get_hunting_scen <- function(path){
+
+  f <- function(path, sheet){
+    df <- readxl::read_excel(path = path, sheet = sheet)
+    return(as.matrix(df))
   }
+
+  Hscen <- path %>%
+    readxl::excel_sheets() %>%
+    set_names() %>%
+    map(f, path = path)
+  return(Hscen)
+}
+
+#------------------------------------------------------------------
+
+# Run a single simulation to estimate the total simulation time
+
+checktime <- function(mylist){
+
+  mylist[["Hm"]] <- mylist$Hs[[1]]
+  mylist[["Hs"]] <- NULL
+
+  koffie <- system.time({ sim_boar(mylist) })
+  return(as.double(koffie[3] * nsim * length(Hs)))
+}
+
+#-------------------------------------------------------------
+# process output - get df_numboar
+
+get_numboar <- function(mytb){
+
+  df_num <- mytb$result %>%
+  map_dfr("df_numboar", .id = "run") %>%
+  left_join(mytb %>%
+              dplyr::select(Hs, sim, run),
+            by = "run") %>%
+  mutate(sex = as.factor(sex),
+         agecl = as.factor(agecl),
+         Hs = as.factor(Hs))
+}
+
+
+# process output - get df_harvest
+
+get_harvest <- function(mytb){
+
+  df_num <- mytb$result %>%
+    map_dfr("df_harvest", .id = "run") %>%
+    left_join(mytb %>%
+                dplyr::select(Hs, sim, run),
+              by = "run") %>%
+    mutate(sex = as.factor(sex),
+           agecl = as.factor(agecl),
+           Hs = as.factor(Hs))
+}

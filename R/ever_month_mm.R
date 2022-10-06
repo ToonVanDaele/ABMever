@@ -75,7 +75,7 @@ sim_h <- function(){
   month <- 1   # In welke maand starten?
 
   while (NLany(boar) & NLcount(boar) < 5000 & year <= max_year) {
-    print(paste(year, month))
+  #  print(paste(year, month))
 
     boar <- hunt(turtles = boar, H = Hm[month,], time)
     boar <- reproduce(boar, Fm[month,])
@@ -114,7 +114,11 @@ sim_h <- function(){
               age_distr = age_distr))
 }
 
+starttime <- Sys.time()
+set.seed(5)
 out <- sim_h()
+endtime <- Sys.time()
+endtime - starttime
 
 # Number of individuals
 df_num <- out$df_numboar
@@ -123,6 +127,11 @@ ggplot(df_num, aes(x = as.integer(time), y = n, color = paste(agecl, sex))) + ge
 # Harvested individuals
 df_hunt <- out$df_harvest
 ggplot(df_hunt, aes(x = as.integer(time), y = n, color = paste(agecl, sex))) + geom_line()
+
+# Total harvested
+df_hunt %>%
+  group_by(sex, agecl) %>%
+  summarise(n = sum(n))
 
 
 #--------------------------------------------------------------
@@ -166,19 +175,38 @@ df_age_distr <- outsim %>%
 ggplot(df_age_distr, aes(x = age, group = sim)) + geom_density()
 
 
+#-------------------------------------------------------
+
+# Set (hunting) scenario's
+
+# H1 - all equal - all year
+Hscen[[1]] <-
+# H2 - all equal - hunting season (sep-march)
+# H3 - adult and yearling only - all year
+# H4 - adult and yearling only - hunting season
+# H5 - male adults all year - yearling during hunting season (sep-march)
+
+
+
+
+
+
+# run scenario's
+
+# process results
 
 
 ###---------------------------------
 
 # Vragen
 
-#- In welke maand start het model? Beter jaarkalender of modelkalender?
+#- In welke maand start het model? Beter jaarkalender of modelkalender? Variabel?
 #- Initiële verdeling van de leeftijden en geslacht
 #- Jacht per maand -> hoe intensiteit uitdrukken? % afschot per maand? verschil male female
 #- Jacht veranderlijk per gewicht -> groeifunctie?
 #- periode tussen twee drachten? een jaar? gemiddeld aantal newborns?
 #- realistische periode (maanden) voor F>0
-#-
+#- scenarios in excel of google sheets
 
 
 # later (eventueel) nog toe te voegen:
