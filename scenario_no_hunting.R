@@ -1,4 +1,4 @@
-# Scenario's example
+# Scenario's example - no hunting
 
 library(tidyverse)
 library(NetLogoR)
@@ -7,7 +7,6 @@ source("R/functions_sim.R")
 
 #---------------------------------
 # Set population parameters
-
 ageclasses <- c("Juvenile", "Yearling", "Adult")
 
 # Survival
@@ -21,17 +20,8 @@ Fm <- set_F(F = F, csv_filename = "./data/input/birth_month.csv") # by month
 # Load all hunting scenario's from excel sheets
 Hscen <- get_hunting_scen(path = "./data/input/hunting_scenarios.xlsx")
 
-# H0 - no hunting
-# H1 - all equal - all year
-# H2 - all equal - hunting season (sep-march)
-# H3 - adult and yearling only - all year
-# H4 - adult and yearling only - hunting season
-# H5 - male adults all year - yearling during hunting season (sep-march)
-# ...
-
-# Hunting scenarios are stored in a list of dataframes
-# Here we only use H1 & H3
-Hs <- Hscen[c("H1", "H3")]
+# We only use H0 - no hunting
+Hs <- Hscen[c("H0")]
 
 # ----------------------------------------------------
 # ABM related parameters
@@ -63,52 +53,30 @@ checktime(mypop)
 
 #-----------------------------------------------------
 # run full simulation
-scen1 <- sim_scen_boar(mypop)
+scen_H0 <- sim_scen_boar(mypop)
 # store output
-saveRDS(scen1, file = "./data/interim/scen1.RDS")
+saveRDS(scen_H0, file = "./data/interim/scen_H0.RDS")
 
 #-----------------------------------------------------
 # process results
 #
 # Alle output (list) wordt bewaard in een tibble
-# met rbind_rows kunnen resultaten van vorige simulaties toevoegen.
-scen0 <- readRDS(file = "./data/interim/scen_H0.RDS") #scenario no hunting
+# met rbind_rows kunnen resultaten van vroegere simulaties worden samengevoegd.
+# Zo moeten simulaties niet steeds opnieuw uitgevoerd worden.
 
-scen <- scen1 %>%
-  bind_rows(scen0)
-
-df_num <- get_numboar(scen)
-df_har <- get_harvest(scen)
+df_num <- get_numboar(scen_H0)
+df_har <- get_harvest(scen_H0)
 
 #----------------------------------------------------
 # plot
 
-# Time series number of female individuals by age class and hunting scenario
+# Time series number of individuals by age class and hunting scenario
 df_num %>%
   filter(sex == "F") %>%
   group_by(time, agecl, Hs) %>%
   summarise(mean = mean(n),
             p90 = quantile(n, prob = 0.9),
-            p10 = quantile(n, prob = 0.1), .groups = "drop") %>%
-  ggplot(aes(x = time, group = paste(agecl, Hs), color = agecl, linetype = Hs)) +
-  geom_smooth(aes(y = mean, ymax = p90, ymin = p10), size = 0.5, stat = "identity")
-
-df_har %>%
-  group_by(agecl, Hs, sim) %>%
-  summarise(n = sum(n), .groups = "drop_last") %>%
-  summarise(mean = mean(n),
-            p90 = quantile(n, prob = 0.9),
             p10 = quantile(n, prob = 0.1)) %>%
-  ggplot(aes(x = paste(agecl, Hs), y = mean)) + geom_point() +
-      geom_errorbar(aes(ymax = p90, ymin = p10), size = 0.5, stat = "identity")
-
-df_har %>%
-  group_by(agecl, Hs, time) %>%
-  summarise(mean = mean(n), .groups = "drop_last") %>%
-  ungroup() %>%
-  complete(time, Hs, agecl, fill = list(mean = 0)) %>%
-  group_by(agecl, Hs) %>%
-  mutate(n = cumsum(mean)) %>%
-  ggplot(aes(x = time, y = n, color = agecl, linetype = Hs)) +
-  geom_line()
+  ggplot(aes(x = time, color = paste(agecl, Hs))) +
+  geom_smooth(aes(y = mean, ymax = p90, ymin = p10), size = 0.5, stat = "identity")
 

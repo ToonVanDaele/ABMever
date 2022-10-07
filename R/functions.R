@@ -295,25 +295,26 @@ checktime <- function(mylist){
 get_numboar <- function(mytb){
 
   df_num <- mytb$result %>%
-  map_dfr("df_numboar", .id = "run") %>%
+  map_dfr("df_numboar", .id = "rowname") %>%
   left_join(mytb %>%
-              dplyr::select(Hs, sim, run),
-            by = "run") %>%
+              dplyr::select(Hs, sim) %>%
+              rownames_to_column(),
+            by = "rowname") %>%
   mutate(sex = as.factor(sex),
          agecl = as.factor(agecl),
          Hs = as.factor(Hs))
 }
-
 
 # process output - get df_harvest
 
 get_harvest <- function(mytb){
 
   df_num <- mytb$result %>%
-    map_dfr("df_harvest", .id = "run") %>%
+    map_dfr("df_harvest", .id = "rowname") %>%
     left_join(mytb %>%
-                dplyr::select(Hs, sim, run),
-              by = "run") %>%
+                dplyr::select(Hs, sim) %>%
+                rownames_to_column(),
+              by = "rowname") %>%
     mutate(sex = as.factor(sex),
            agecl = as.factor(agecl),
            Hs = as.factor(Hs))
