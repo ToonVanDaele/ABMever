@@ -83,7 +83,7 @@ df_har <- get_harvest(scen)
 #----------------------------------------------------
 # plot
 
-# Time series number of female individuals by age class and hunting scenario
+# Time series: number of female individuals by age class and hunting scenario
 df_num %>%
   filter(sex == "F") %>%
   group_by(time, agecl, Hs) %>%
@@ -93,6 +93,7 @@ df_num %>%
   ggplot(aes(x = time, group = paste(agecl, Hs), color = agecl, linetype = Hs)) +
   geom_smooth(aes(y = mean, ymax = p90, ymin = p10), size = 0.5, stat = "identity")
 
+# Total harvest by age class and scenario
 df_har %>%
   group_by(agecl, Hs, sim) %>%
   summarise(n = sum(n), .groups = "drop_last") %>%
@@ -102,6 +103,7 @@ df_har %>%
   ggplot(aes(x = paste(agecl, Hs), y = mean)) + geom_point() +
       geom_errorbar(aes(ymax = p90, ymin = p10), size = 0.5, stat = "identity")
 
+# Cumulative harvest by age class and scenario
 df_har %>%
   group_by(agecl, Hs, time) %>%
   summarise(mean = mean(n), .groups = "drop_last") %>%
