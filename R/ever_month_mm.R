@@ -203,7 +203,6 @@ Hscen[[1]] <-
 #- In welke maand start het model? Beter jaarkalender of modelkalender? Variabel?
 #- Initiële verdeling van de leeftijden en geslacht
 #- Jacht per maand -> hoe intensiteit uitdrukken? % afschot per maand? verschil male female
-#- Jacht veranderlijk per gewicht -> groeifunctie?
 #- periode tussen twee drachten? een jaar? gemiddeld aantal newborns?
 #- realistische periode (maanden) voor F>0
 #- scenarios in excel of google sheets
@@ -213,3 +212,5 @@ Hscen[[1]] <-
 # F proportie reproductie * worpgrootte *
 #? Kans op overleven van moederdier is dit met post-natal survival
 # ? cijfers over dracht bij jacht op basis van embryo's
+# Jacht veranderlijk per gewicht -> groeifunctie? -> gewicht is uitsluitend
+# afhankelijk van leeftijd, dus voorlopig niet nodig.

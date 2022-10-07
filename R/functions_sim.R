@@ -1,11 +1,9 @@
-sim_boar <- function(mylist){
+# Single simulation for wild boar
+#
+# @param max_year
 
-  max_year <- mylist[["max_year"]]
-  init_age <- mylist[["init_age"]]
-  Hm <- mylist[["Hm"]]
-  S <- mylist[["S"]]
-  Fm <- mylist[["Fm"]]
-  world <- mylist[["world"]]
+sim_boar <- function(max_year = max_year, init_age = init_age,
+                     Hm = Hm, S = S, Fm = Fm, world = world){
 
   # initialisation
   boar <- abm_init_m(init_age = init_age, world = world)
@@ -71,14 +69,12 @@ sim_scen_boar <- function(scenlist){
 
   for (i in 1:nrow(df)){
 
-  simlist <- list(init_age = scenlist$init_age,
-                  max_year = scenlist$max_year,
-                  S = scenlist$S,
-                  Fm = scenlist$Fm,
-                  world = scenlist$world,
-                  Hm = scenlist$Hs[[df$Hs[i]]])
-
-  outsim <- sim_boar(simlist)
+  outsim <- sim_boar(init_age = scenlist$init_age,
+                     max_year = scenlist$max_year,
+                     S = scenlist$S,
+                     Fm = scenlist$Fm,
+                     world = scenlist$world,
+                     Hm = scenlist$Hs[[df$Hs[i]]])
   df$result[i] <- list(outsim)
   }
   return(df)

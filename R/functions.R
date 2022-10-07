@@ -280,10 +280,12 @@ get_hunting_scen <- function(path){
 
 checktime <- function(mylist){
 
-  mylist[["Hm"]] <- mylist$Hs[[1]]
-  mylist[["Hs"]] <- NULL
-
-  koffie <- system.time({ sim_boar(mylist) })
+  koffie <- system.time({ sim_boar(init_age = mylist$init_age,
+                                   max_year = mylist$max_year,
+                                   S = mylist$S,
+                                   Fm = mylist$Fm,
+                                   world = mylist$world,
+                                   Hm = mylist$Hs[[1]]) })
   return(as.double(koffie[3] * nsim * length(Hs)))
 }
 

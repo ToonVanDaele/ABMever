@@ -2,7 +2,6 @@
 
 library(tidyverse)
 library(NetLogoR)
-library(popbio)
 source("R/functions.R")
 source("R/functions_sim.R")
 
@@ -37,8 +36,8 @@ Hs <- Hscen[c("H1", "H3")]
 # ABM related parameters
 
 nboar0 <- 1000    # initial population size
-max_year <- 10    # number of years to simulate
-nsim <- 2        # number of simulations per scenario
+max_year <- 5    # number of years to simulate
+nsim <- 4        # number of simulations per scenario
 
 # Set initial age distribution  (nog aan te passen!!)
 init_age <- rgamma(n = nboar0, shape = 2, rate = 0.8) * 12
@@ -55,7 +54,6 @@ mypop <- list(init_age = init_age,
               S = S,
               Fm = Fm,
               Hs = Hs,
-              ageclasses = ageclasses,
               world = dummy)
 
 # --------------------------------------------------
@@ -75,6 +73,7 @@ df_har <- get_harvest(scen1)
 #----------------------------------------------------
 # plot
 
+# Time series number of individuals by age class and hunting scenario
 df_num %>%
   filter(sex == "F") %>%
   group_by(time, agecl, Hs) %>%
@@ -84,11 +83,22 @@ df_num %>%
   ggplot(aes(x = time, color = paste(agecl, Hs))) +
   geom_smooth(aes(y = mean, ymax = p90, ymin = p10), size = 0.5, stat = "identity")
 
+
 df_har %>%
-  filter(sex == "F") %>%
+  group_by(agecl, Hs, sim) %>%
+  summarise(n = sum(n), .groups = "drop_last") %>%
+  summarise(mean = mean(n),
+            p90 = quantile(n, prob = 0.9),
+            p10 = quantile(n, prob = 0.1)) %>%
+  ggplot(aes(x = paste(agecl, Hs), y = mean)) + geom_point() +
+      geom_errorbar(aes(ymax = p90, ymin = p10), size = 0.5, stat = "identity")
+
+
+df_har %>%
   group_by(time, agecl, Hs) %>%
   summarise(mean = mean(n),
             p90 = quantile(n, prob = 0.9),
             p10 = quantile(n, prob = 0.1)) %>%
   ggplot(aes(x = time, color = paste(agecl, Hs))) +
   geom_smooth(aes(y = mean, ymax = p90, ymin = p10), size = 0.5, stat = "identity")
+
