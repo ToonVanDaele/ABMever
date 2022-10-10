@@ -62,9 +62,9 @@ mypop <- list(init_age = init_age,
 checktime(mypop)
 
 #-----------------------------------------------------
-# run full simulation
+# run full simulation and store results
 scen1 <- sim_scen_boar(mypop)
-# store output
+
 saveRDS(scen1, file = "./data/interim/scen1.RDS")
 
 #-----------------------------------------------------

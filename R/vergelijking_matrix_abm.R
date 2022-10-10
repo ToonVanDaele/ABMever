@@ -1,7 +1,6 @@
-# Compare population matrix and individual based
+# Compare population matrix and individual based model
 
-# This script compares the results of a matrix population model
-# with the results of an individual based model with
+# This script compares the results of both approaches with
 # similar population parameters
 
 library(tidyverse)
@@ -12,59 +11,62 @@ source("R/functions_sim.R")
 source("R/functions_matrix.R")
 
 #---------------------------------
-# Set overall population parameters
+# Set overall demographic parameters
 ageclasses <- c("Juvenile", "Yearling", "Adult")
 nboar0 <- 1000    # initial population size
 max_year <- 5    # number of years to simulate
 
-# Survival
+# Survival rate
 S <- c(0.6, 0.8, 0.9) # yearly survival probability
-
-# Fertility
-F <- c(0, 0.1, 0.5) # yearly fertility
-
-# Harvest
+# Fertility rate
+F <- c(0, 0, 0.25) # yearly fertility
+# Harvest rate
 H <- c(0, 0, 0)
 
 #-----------------------------------------------------------
-# Matrix model
-# Used to asses the initial age distribution (based on stable stage)
-mat <- matrix(c(F[1], F[2],	F[3],
-                S[1], 0,  	0,
-                0,    S[2],	S[3]), ncol = 3, byrow = TRUE)
-mat_h <- t(t(mat) * (1 - H))
+# Set projection matrix (yearly)
+mat <- set_projmat_post(S = S, F = F, H = H)
 
-init_agecl <- stable.stage(mat_h) * nboar   # initial number by age class
+# Set initial ageclasses as stable stage without hunting
+# in order to be able to compare different huntig scenarios later on.
+init_agecl <- stable.stage(mat$mat) * nboar0
 
+# run population model
+out_m <- matrix_proj(A = mat$mat_h, n = init_agecl / 2, iterations = max_year + 1)
 
+# Plot
+ggplot(data = out_m, aes(x = time, y = n, color = agecl, group = agecl)) +
+  geom_line()
 
+#--------------------------------------------------
+# Parameters for ABM model
 
+# S monthly
+Sm <- S^(1/12)
+# F monthly
+#Fm <- set_F(F = F, csv_filename = "./data/input/birth_month.csv") # by month
+Fm <- matrix(data = 0, nrow = 12, ncol = 3, dimnames = list(NULL, ageclasses))
+Fm[12,] <- F
+# H monthly
 
-
-Fm <- set_F(F = F, csv_filename = "./data/input/birth_month.csv") # by month
-
-# Hunting (by month)
 # Load all hunting scenario's from excel sheets
 Hscen <- get_hunting_scen(path = "./data/input/hunting_scenarios.xlsx")
-
-# We only use H0 - no hunting
+# H0 - no hunting
 Hs <- Hscen[c("H0")]
 
-# ----------------------------------------------------
-# ABM related parameters
-
-nsim <- 4        # number of simulations per scenario
+nsim <- 5   # number of simulations
 
 # Set initial age distribution  (nog aan te passen!!)
-init_age <- rgamma(n = nboar0, shape = 2, rate = 0.8) * 12
+df_init_pop <- set_init_pop(init_agecl = init_agecl)
+
+hist(df_init_pop$age / 12)
 
 # Create world (required, but not used)
 dummy <- createWorld(minPxcor = -5, maxPxcor = 5, minPycor = -5, maxPycor = 5)
 
-
 #----------------------------------------------------
 # Put everything together in a list for multiple scenarios
-mypop <- list(init_age = init_age,
+mypop <- list(init_pop = df_init_pop,
               max_year = max_year,
               nsim = nsim,
               S = S,
@@ -78,19 +80,15 @@ checktime(mypop)
 
 #-----------------------------------------------------
 # run full simulation
-scen_H0 <- sim_scen_boar(mypop)
+scen_comp <- sim_scen_boar(mypop)
 # store output
-saveRDS(scen_H0, file = "./data/interim/scen_H0.RDS")
+saveRDS(scen_comp, file = "./data/interim/scen_comp.RDS")
 
 #-----------------------------------------------------
 # process results
 #
-# Alle output (list) wordt bewaard in een tibble
-# met rbind_rows kunnen resultaten van vroegere simulaties worden samengevoegd.
-# Zo moeten simulaties niet steeds opnieuw uitgevoerd worden.
-
-df_num <- get_numboar(scen_H0)
-df_har <- get_harvest(scen_H0)
+df_num <- get_numboar(scen_comp)
+#df_har <- get_harvest(scen_comp)
 
 #----------------------------------------------------
 # plot
@@ -105,8 +103,38 @@ df_num %>%
   ggplot(aes(x = time, color = paste(agecl, Hs))) +
   geom_smooth(aes(y = mean, ymax = p90, ymin = p10), size = 0.5, stat = "identity")
 
+# plot matrix + abm
+
+df_num %>%
+  filter(sex == "F") %>%
+  group_by(time, agecl, Hs) %>%
+  summarise(mean = mean(n),
+            p90 = quantile(n, prob = 0.9),
+            p10 = quantile(n, prob = 0.1)) %>%
+  ggplot(aes(x = time, color = paste(agecl, Hs))) +
+  geom_smooth(aes(y = mean, ymax = p90, ymin = p10), size = 0.5, stat = "identity") +
+  geom_line(data = out_m, aes(x = (time - 1) * 12 + 1, y = n, color = agecl, group = agecl)) +
+  geom_point(data = out_m, aes(x = (time - 1) * 12 + 1, y = n, color = agecl, group = agecl))
 
 
-nsim <- 10       # number of simulations
+df_num %>%
+  filter(time == 1) %>%
+  arrange(agecl, sex) %>%
+  view()
+
+
+100 * 0.25
+
+mpois <- function(a){
+  sum(rpois(n = 100, lambda = 0.25))
+}
+
+df <- data.frame(n = 1:1000)
+df <- df %>%
+  rowwise() %>%
+  mutate(pp = mpois())
+hist(df$pp)
+mean(df$pp)
+median(df$pp)
 
 

@@ -2,11 +2,11 @@
 #
 # @param max_year
 
-sim_boar <- function(max_year = max_year, init_age = init_age,
+sim_boar <- function(max_year = max_year, init_pop = init_pop,
                      Hm = Hm, S = S, Fm = Fm, world = world){
 
   # initialisation
-  boar <- abm_init_m(init_age = init_age, world = world)
+  boar <- abm_init_m(init_pop = init_pop, world = world)
   tracknum <- NULL
   trackhunt <<- NULL
 
@@ -17,14 +17,14 @@ sim_boar <- function(max_year = max_year, init_age = init_age,
   while (NLany(boar) & NLcount(boar) < 5000 & year <= max_year) {
     #  print(paste(year, month))
 
+    # track number of individuals in each age class
+    d <- get_boar(boar)
+    tracknum[[time]] <- d
+
     boar <- hunt(turtles = boar, H = Hm[month,], time)
     boar <- reproduce(turtles = boar, F = Fm[month,])
     boar <- mortality(boar, S^(1/12))
     boar <- aging_m(boar)
-
-    # track number of individuals in each age class
-    d <- get_boar(boar)
-    tracknum[[time]] <- d
 
     time <- time + 1
     month <- month + 1
@@ -67,9 +67,9 @@ sim_scen_boar <- function(scenlist){
     mutate(run = row.names(.)) %>%
     as_tibble()
 
-  for (i in 1:nrow(df)){
+  for (i in 1:nrow(df)) {
 
-  outsim <- sim_boar(init_age = scenlist$init_age,
+  outsim <- sim_boar(init_pop = scenlist$init_pop,
                      max_year = scenlist$max_year,
                      S = scenlist$S,
                      Fm = scenlist$Fm,
