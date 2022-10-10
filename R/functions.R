@@ -49,11 +49,6 @@ abm_init_y <- function(init_agecls){
 #--------------------------------------------------------------
 # initialisation (time base = month)
 
-# Initial age = lowest possible age for each class
-
-# Dit geeft in de eerste tijdstappn een scheve leeftijdsdistributie
-# Welke alternatieve initiële leeftijdsdistributies zijn mogelijk?
-
 abm_init_m <- function(init_pop, world){
 
   nb <- nrow(init_pop)  # number of individuals

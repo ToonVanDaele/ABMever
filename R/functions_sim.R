@@ -56,7 +56,7 @@ sim_boar <- function(max_year = max_year, init_pop = init_pop,
 
 
 #---------------------------------------------------------
-# run simulation
+# run simulation for 1 or more scenarios
 
 sim_scen_boar <- function(scenlist){
 
@@ -79,23 +79,3 @@ sim_scen_boar <- function(scenlist){
   }
   return(df)
 }
-
-
-
-# sim_scen_boar <- function(scenlist){
-#
-#   mylist <- NULL
-#   for (i in 1:length(scenlist$Hs)){
-#
-#   simlist <- list(init_age = scenlist$init_age,
-#                   max_year = scenlist$max_year,
-#                   S = scenlist$S,
-#                   Fm = scenlist$Fm,
-#                   world = scenlist$world,
-#                   Hm = scenlist$Hs[[1]])
-#
-#   outsim <- map(1:nsim, ~ sim_boar(simlist))
-#   mylist[[names(scenlist$Hs[i])]] <- outsim
-#   }
-#   return(mylist)
-# }

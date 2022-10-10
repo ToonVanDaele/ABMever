@@ -25,8 +25,6 @@ Hscen <- get_hunting_scen(path = "./data/input/hunting_scenarios.xlsx")
 # H1 - all equal - all year
 # H2 - all equal - hunting season (sep-march)
 # H3 - adult and yearling only - all year
-# H4 - adult and yearling only - hunting season
-# H5 - male adults all year - yearling during hunting season (sep-march)
 # ...
 
 # Hunting scenarios are stored in a list of dataframes
@@ -41,7 +39,8 @@ max_year <- 5    # number of years to simulate
 nsim <- 4        # number of simulations per scenario
 
 # Set initial age distribution  (nog aan te passen!!)
-init_age <- rgamma(n = nboar0, shape = 2, rate = 0.8) * 12
+
+init_pop <- set_init_pop(init_agecl = c(200, 100, 500))
 
 # Create world (required, but not used)
 dummy <- createWorld(minPxcor = -5, maxPxcor = 5, minPycor = -5, maxPycor = 5)
