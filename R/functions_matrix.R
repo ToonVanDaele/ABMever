@@ -1,13 +1,16 @@
 # Functions for population matrix
 
 #--------------------------------------------------------
-# Create a projection matrix
+# Create a projection matrix based on demographic parameters
+#
+# The matrix model is female only with a post-breeding sensus
 
 set_projmat_post <- function(S = S, F = F, H = H){
 
-  mat <- matrix(c(F[1]*S[1], F[2]*S[2],	F[3]*S[3],
-                  S[1], 0,  	0,
-                  0,    S[2],	S[3]), ncol = 3, byrow = TRUE)
+  mat <- matrix(c(F[1]*S[1]*0.5, F[2]*S[2]*0.5,	F[3]*S[3]*0.5,
+                  S[1],          0,  	          0,
+                  0,             S[2],	        S[3]),
+                ncol = 3, byrow = TRUE)
   mat_h <- t(t(mat) * (1 - H))
   return(list(mat = mat, mat_h = mat_h))
 }

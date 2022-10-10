@@ -17,14 +17,14 @@ sim_boar <- function(max_year = max_year, init_pop = init_pop,
   while (NLany(boar) & NLcount(boar) < 5000 & year <= max_year) {
     #  print(paste(year, month))
 
-    # track number of individuals in each age class
-    d <- get_boar(boar)
-    tracknum[[time]] <- d
-
     boar <- hunt(turtles = boar, H = Hm[month,], time)
     boar <- reproduce(turtles = boar, F = Fm[month,])
     boar <- mortality(boar, S^(1/12))
     boar <- aging_m(boar)
+
+    # track number of individuals in each age class
+    d <- get_boar(boar)
+    tracknum[[time]] <- d
 
     time <- time + 1
     month <- month + 1

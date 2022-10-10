@@ -19,7 +19,7 @@ max_year <- 5    # number of years to simulate
 # Survival rate
 S <- c(0.6, 0.8, 0.9) # yearly survival probability
 # Fertility rate
-F <- c(0, 0, 0.25) # yearly fertility
+F <- c(0, 0, 0.5) # yearly fertility
 # Harvest rate
 H <- c(0, 0, 0)
 
@@ -41,38 +41,45 @@ ggplot(data = out_m, aes(x = time, y = n, color = agecl, group = agecl)) +
 #--------------------------------------------------
 # Parameters for ABM model
 
-# S monthly
+# Surival monthly
 Sm <- S^(1/12)
-# F monthly
-#Fm <- set_F(F = F, csv_filename = "./data/input/birth_month.csv") # by month
-Fm <- matrix(data = 0, nrow = 12, ncol = 3, dimnames = list(NULL, ageclasses))
-Fm[12,] <- F
-# H monthly
+# Fertility monthly --  nog te bekijken!!
+Fm <- set_F(F = F, csv_filename = "./data/input/birth_month.csv") # by month
+# reproduction only in month 12
+# Fm <- matrix(data = 0, nrow = 12, ncol = 3, dimnames = list(NULL, ageclasses))
+# Fm[12,] <- F
+Fm
 
+# geometrische gemiddelde
+exp(mean(log(Fm[,"Adult"]))) * 12
+rpois(n = 12, lambda = Fm[,"Adult"])
+
+# Hunting monthly
 # Load all hunting scenario's from excel sheets
 Hscen <- get_hunting_scen(path = "./data/input/hunting_scenarios.xlsx")
-# H0 - no hunting
+# We only use H0 - no hunting
 Hs <- Hscen[c("H0")]
 
 nsim <- 5   # number of simulations
 
 # Set initial age distribution  (nog aan te passen!!)
-df_init_pop <- set_init_pop(init_agecl = init_agecl)
+#init_pop <- set_init_pop(init_agecl = init_agecl)
+init_pop <- set_init_pop2(init_agecl = init_agecl)
 
-hist(df_init_pop$age / 12)
+hist(init_pop$age / 12)
 
 # Create world (required, but not used)
-dummy <- createWorld(minPxcor = -5, maxPxcor = 5, minPycor = -5, maxPycor = 5)
+world <- createWorld(minPxcor = -5, maxPxcor = 5, minPycor = -5, maxPycor = 5)
 
 #----------------------------------------------------
 # Put everything together in a list for multiple scenarios
-mypop <- list(init_pop = df_init_pop,
+mypop <- list(init_pop = init_pop,
               max_year = max_year,
               nsim = nsim,
               S = S,
               Fm = Fm,
               Hs = Hs,
-              world = dummy)
+              world = world)
 
 # --------------------------------------------------
 # run a single simulation to estimate required time (seconds)
@@ -117,8 +124,9 @@ df_num %>%
   geom_point(data = out_m, aes(x = (time - 1) * 12 + 1, y = n, color = agecl, group = agecl))
 
 
+
 df_num %>%
-  filter(time == 1) %>%
+  filter(sim == 1) %>%
   arrange(agecl, sex) %>%
   view()
 

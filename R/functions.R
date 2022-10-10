@@ -33,6 +33,39 @@ set_init_pop <- function(init_agecl){
   return(init_pop)
 }
 
+#-------------------------------------------------------------------------
+# Set initial ages
+set_init_pop2 <- function(init_agecl){
+
+  # We set a fixed (50/50) sex ratio for the initial population.
+  # This makes comparision with the (female only) matrix population model easier
+
+  # Initial sex can also be set randomly. Although this can initially create
+  # extra variability in the population. Stable sex ratio will only be reached
+  # after several years.
+
+  nb_f <- round(init_agecl / 2, 0)
+  nb_m <- round(init_agecl - nb_f, 0)
+  # first two age classes - uniform distributed
+  age_0 <- runif(n = round(init_agecl[1], 0),min = 1, max = 12)
+  sex_0 <- c(rep("F", nb_f[1]), rep("M", nb_m[1]))
+
+  age_1 <- runif(n = round(init_agecl[2], 0),min = 13, max = 24)
+  sex_1 <- c(rep("F", nb_f[2]), rep("M", nb_m[2]))
+
+  # adult geometric distribution
+  age_2 <- rgamma(n = round(init_agecl[3], 0), shape = 2, rate = 0.8) * 12 + 24
+  sex_2 <- c(rep("F", nb_f[3]), rep("M", nb_m[3]))
+
+  ages <- c(age_0, age_1, age_2)
+  sexes <- c(sex_0, sex_1, sex_2)
+
+  init_pop <- data.frame(age = ages, sex = sexes)
+
+  return(init_pop)
+}
+
+
 #----------------------------------------------------------------
 # initialisation (time base = year)
 abm_init_y <- function(init_agecls){
@@ -52,7 +85,7 @@ abm_init_y <- function(init_agecls){
 abm_init_m <- function(init_pop, world){
 
   nb <- nrow(init_pop)  # number of individuals
-  boar <- createTurtles(n = nb, world = dummy,
+  boar <- createTurtles(n = nb, world = world,
                         breed = "wildboar",
                         color = rep("red", nb))
   boar <- turtlesOwn(turtles = boar,

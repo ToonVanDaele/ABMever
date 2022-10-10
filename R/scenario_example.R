@@ -45,10 +45,9 @@ init_pop <- set_init_pop(init_agecl = c(200, 100, 500))
 # Create world (required, but not used)
 dummy <- createWorld(minPxcor = -5, maxPxcor = 5, minPycor = -5, maxPycor = 5)
 
-
 #----------------------------------------------------
 # Put everything together in a list for multiple scenarios
-mypop <- list(init_age = init_age,
+mypop <- list(init_pop = init_pop,
               max_year = max_year,
               nsim = nsim,
               S = S,
@@ -63,18 +62,20 @@ checktime(mypop)
 #-----------------------------------------------------
 # run full simulation and store results
 scen1 <- sim_scen_boar(mypop)
-
 saveRDS(scen1, file = "./data/interim/scen1.RDS")
 
+scen1
+scen1$result[[1]][[1]]
 #-----------------------------------------------------
 # process results
 #
-# Alle output (list) wordt bewaard in een tibble
-# met rbind_rows kunnen resultaten van vorige simulaties toevoegen.
+# Alle output (list) wordt bewaard in een tibble.
+# Met rbind_rows voegen we resultaten van vorige simulaties toe.
 scen0 <- readRDS(file = "./data/interim/scen_H0.RDS") #scenario no hunting
 
 scen <- scen1 %>%
   bind_rows(scen0)
+scen
 
 df_num <- get_numboar(scen)
 df_har <- get_harvest(scen)
