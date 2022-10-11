@@ -11,6 +11,7 @@ ageclasses <- c("Juvenile", "Yearling", "Adult")
 
 # Survival
 S <- c(0.6, 0.8, 0.9) # yearly survival probability
+Sm <- S^(1/12)        # monthly survival probability
 
 # Fertility
 F <- c(0, 0.1, 0.5) # yearly fertility
@@ -43,7 +44,7 @@ world <- createWorld(minPxcor = -5, maxPxcor = 5, minPycor = -5, maxPycor = 5)
 mypop <- list(init_pop = init_pop,
               max_year = max_year,
               nsim = nsim,
-              S = S,
+              Sm = Sm,
               Fm = Fm,
               Hs = Hs,
               world = world)

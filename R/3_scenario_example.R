@@ -52,7 +52,7 @@ world <- createWorld(minPxcor = -5, maxPxcor = 5, minPycor = -5, maxPycor = 5)
 mypop <- list(init_pop = init_pop,
               max_year = max_year,
               nsim = nsim,
-              S = S,
+              Sm = Sm,
               Fm = Fm,
               Hs = Hs,
               world = world)
