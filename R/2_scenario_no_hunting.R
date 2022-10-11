@@ -14,7 +14,8 @@ S <- c(0.6, 0.8, 0.9) # yearly survival probability
 
 # Fertility
 F <- c(0, 0.1, 0.5) # yearly fertility
-Fm <- set_F(F = F, csv_filename = "./data/input/birth_month.csv") # by month
+birth_month <- get_birth_month(csv_filename = "./data/input/birth_month.csv")
+Fm <- set_F(F = F, birth_month = birth_month) # by month
 
 # Hunting (by month)
 # Load all hunting scenario's from excel sheets
@@ -31,21 +32,21 @@ max_year <- 5    # number of years to simulate
 nsim <- 4        # number of simulations per scenario
 
 # Set initial age distribution  (nog aan te passen!!)
-init_age <- rgamma(n = nboar0, shape = 2, rate = 0.8) * 12
+init_pop <- set_init_pop(init_agecl = c(200, 100, 500),
+                         birth_month = birth_month, Sm = Sm)
 
 # Create world (required, but not used)
-dummy <- createWorld(minPxcor = -5, maxPxcor = 5, minPycor = -5, maxPycor = 5)
-
+world <- createWorld(minPxcor = -5, maxPxcor = 5, minPycor = -5, maxPycor = 5)
 
 #----------------------------------------------------
 # Put everything together in a list for multiple scenarios
-mypop <- list(init_age = init_age,
+mypop <- list(init_pop = init_pop,
               max_year = max_year,
               nsim = nsim,
               S = S,
               Fm = Fm,
               Hs = Hs,
-              world = dummy)
+              world = world)
 
 # --------------------------------------------------
 # run a single simulation to estimate required time (seconds)

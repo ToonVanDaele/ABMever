@@ -14,12 +14,12 @@ source("R/functions_matrix.R")
 # Set overall demographic parameters
 ageclasses <- c("Juvenile", "Yearling", "Adult")
 nboar0 <- 1000    # initial population size
-max_year <- 5    # number of years to simulate
+max_year <- 15    # number of years to simulate
 
 # Survival rate
 S <- c(0.6, 0.8, 0.9) # yearly survival probability
 # Fertility rate
-F <- c(0, 0, 0.5) # yearly fertility
+F <- c(0.1, 0.2, 0.5) # yearly fertility
 # Harvest rate
 H <- c(0, 0, 0)
 
@@ -44,15 +44,12 @@ ggplot(data = out_m, aes(x = time, y = n, color = agecl, group = agecl)) +
 # Surival monthly
 Sm <- S^(1/12)
 # Fertility monthly --  nog te bekijken!!
-Fm <- set_F(F = F, csv_filename = "./data/input/birth_month.csv") # by month
+birth_month <- get_birth_month(csv_filename = "./data/input/birth_month.csv")
+Fm <- set_F(F = F, birth_month = birth_month) # by month
 # reproduction only in month 12
 # Fm <- matrix(data = 0, nrow = 12, ncol = 3, dimnames = list(NULL, ageclasses))
 # Fm[12,] <- F
-Fm
-
-# geometrische gemiddelde
-exp(mean(log(Fm[,"Adult"]))) * 12
-rpois(n = 12, lambda = Fm[,"Adult"])
+# Fm
 
 # Hunting monthly
 # Load all hunting scenario's from excel sheets
@@ -63,8 +60,8 @@ Hs <- Hscen[c("H0")]
 nsim <- 5   # number of simulations
 
 # Set initial age distribution  (nog aan te passen!!)
-#init_pop <- set_init_pop(init_agecl = init_agecl)
-init_pop <- set_init_pop2(init_agecl = init_agecl)
+init_pop <- set_init_pop(init_agecl = init_agecl, birth_month = birth_month, Sm = Sm)
+#init_pop <- set_init_pop2(init_agecl = init_agecl)
 
 hist(init_pop$age / 12)
 
@@ -98,18 +95,6 @@ df_num <- get_numboar(scen_comp)
 #df_har <- get_harvest(scen_comp)
 
 #----------------------------------------------------
-# plot
-
-# Time series number of individuals by age class and hunting scenario
-df_num %>%
-  filter(sex == "F") %>%
-  group_by(time, agecl, Hs) %>%
-  summarise(mean = mean(n),
-            p90 = quantile(n, prob = 0.9),
-            p10 = quantile(n, prob = 0.1)) %>%
-  ggplot(aes(x = time, color = paste(agecl, Hs))) +
-  geom_smooth(aes(y = mean, ymax = p90, ymin = p10), size = 0.5, stat = "identity")
-
 # plot matrix + abm
 
 df_num %>%
@@ -123,26 +108,5 @@ df_num %>%
   geom_line(data = out_m, aes(x = (time - 1) * 12 + 1, y = n, color = agecl, group = agecl)) +
   geom_point(data = out_m, aes(x = (time - 1) * 12 + 1, y = n, color = agecl, group = agecl))
 
-
-
-df_num %>%
-  filter(sim == 1) %>%
-  arrange(agecl, sex) %>%
-  view()
-
-
-100 * 0.25
-
-mpois <- function(a){
-  sum(rpois(n = 100, lambda = 0.25))
-}
-
-df <- data.frame(n = 1:1000)
-df <- df %>%
-  rowwise() %>%
-  mutate(pp = mpois())
-hist(df$pp)
-mean(df$pp)
-median(df$pp)
 
 

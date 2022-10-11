@@ -12,10 +12,12 @@ ageclasses <- c("Juvenile", "Yearling", "Adult")
 
 # Survival
 S <- c(0.6, 0.8, 0.9) # yearly survival probability
+Sm <- S^(1/12)        # monthly survival probability
 
 # Fertility
 F <- c(0, 0.1, 0.5) # yearly fertility
-Fm <- set_F(F = F, csv_filename = "./data/input/birth_month.csv") # by month
+birth_month <- get_birth_month(csv_filename = "./data/input/birth_month.csv")
+Fm <- set_F(F = F, birth_month = birth_month) # by month
 
 # Hunting (by month)
 # Load all hunting scenario's from excel sheets
@@ -39,11 +41,11 @@ max_year <- 5    # number of years to simulate
 nsim <- 4        # number of simulations per scenario
 
 # Set initial age distribution  (nog aan te passen!!)
-
-init_pop <- set_init_pop(init_agecl = c(200, 100, 500))
+init_pop <- set_init_pop(init_agecl = c(200, 100, 500),
+                         birth_month = birth_month, Sm = Sm)
 
 # Create world (required, but not used)
-dummy <- createWorld(minPxcor = -5, maxPxcor = 5, minPycor = -5, maxPycor = 5)
+world <- createWorld(minPxcor = -5, maxPxcor = 5, minPycor = -5, maxPycor = 5)
 
 #----------------------------------------------------
 # Put everything together in a list for multiple scenarios
@@ -53,7 +55,7 @@ mypop <- list(init_pop = init_pop,
               S = S,
               Fm = Fm,
               Hs = Hs,
-              world = dummy)
+              world = world)
 
 # --------------------------------------------------
 # run a single simulation to estimate required time (seconds)
@@ -65,7 +67,8 @@ scen1 <- sim_scen_boar(mypop)
 saveRDS(scen1, file = "./data/interim/scen1.RDS")
 
 scen1
-scen1$result[[1]][[1]]
+#head(scen1$result[[1]][[3]])
+
 #-----------------------------------------------------
 # process results
 #
@@ -114,3 +117,7 @@ df_har %>%
   ggplot(aes(x = time, y = n, color = agecl, linetype = Hs)) +
   geom_line()
 
+# - mortaliteit : totaal / per maand
+# - maandelijks percentage aanpassen om terug tot 1 te komen (analoog aan jaarmodel)
+# - daarna met variaties doorheen het jaar werken
+# -
