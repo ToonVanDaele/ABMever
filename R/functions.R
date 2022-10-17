@@ -163,7 +163,7 @@ checktime <- function(mylist){
 
   koffie <- system.time({ sim_boar(init_pop = mylist$init_pop,
                                    max_year = mylist$max_year,
-                                   S = mylist$S,
+                                   Sm = mylist$Sm,
                                    Fm = mylist$Fm,
                                    world = mylist$world,
                                    Hm = mylist$Hs[[1]]) })

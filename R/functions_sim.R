@@ -7,7 +7,7 @@
 #
 #
 sim_boar <- function(max_year = max_year, init_pop = init_pop,
-                     Hm = Hm, S = S, Fm = Fm, world = world){
+                     Hm = Hm, Sm = Sm, Fm = Fm, world = world){
 
   # initialisation
   boar <- abm_init_m(init_pop = init_pop, world = world)
@@ -23,7 +23,7 @@ sim_boar <- function(max_year = max_year, init_pop = init_pop,
 
     boar <- hunt(turtles = boar, H = Hm[month,], time)
     boar <- reproduce(turtles = boar, F = Fm[month,])
-    boar <- mortality(boar, S^(1/12))
+    boar <- mortality(boar, Sm)
     boar <- aging_m(boar)
 
     # track number of individuals in each age class
@@ -51,7 +51,7 @@ sim_boar <- function(max_year = max_year, init_pop = init_pop,
 
   # store age distribution at the end of the simulation
   age_distr <- boar@.Data %>%
-    as_tibble() %>%
+    as.data.frame() %>%
     dplyr::select(age, agecl)
 
   return(list(df_numboar = df_numboar, df_harvest = df_harvest,
@@ -75,7 +75,7 @@ sim_scen_boar <- function(scenlist){
 
   outsim <- sim_boar(init_pop = scenlist$init_pop,
                      max_year = scenlist$max_year,
-                     S = scenlist$S,
+                     Sm = scenlist$Sm,
                      Fm = scenlist$Fm,
                      world = scenlist$world,
                      Hm = scenlist$Hs[[df$Hs[i]]])
@@ -83,20 +83,6 @@ sim_scen_boar <- function(scenlist){
   }
   return(df)
 }
-
-
-#----------------------------------------------------------------
-# initialisation (time base = year)
-abm_init_y <- function(init_pop, world){
-  boar <- createTurtles(n = length(init_agecls), world = world,
-                        breed = "wildboar",
-                        color = rep("red", length(init_agecls)))
-  boar <- turtlesOwn(turtles = boar, tVar = "age",
-                     tVal = init_agecls)
-  boar <- turtlesOwn(turtles = boar, tVar = "agecl",
-                     tVal = init_agecls)
-}
-
 
 #--------------------------------------------------------------
 # Initialisation (time base = Month)
@@ -207,23 +193,6 @@ reproduce <- function(turtles = boar, F) {
   return(turtles)
 }
 
-#---------------------------------------------------------
-## aging (time step = one year)
-aging_y <- function(turtles){
-  # Newbborns become wildboars
-  newborn <- NLwith(agents = turtles, var = "breed", val = "newborn")
-  turtles <- NLset(turtles = turtles, agents = newborn,
-                   var = c("breed", "agecl"),
-                   val = data.frame(breed = "wildboar",
-                                    agecl = 0))
-  # All age + 1
-  turtles@.Data[, "age"] <- turtles@.Data[, "age"] + 1
-
-  # Set age class
-  turtles@.Data[turtles@.Data[, "age"] > 12, "agecl"] <- 1
-  turtles@.Data[turtles@.Data[, "age"] > 24, "agecl"] <- 2
-  return(turtles)
-}
 
 #--------------------------------------------------------------------
 ## aging (time step = one month)
@@ -240,3 +209,19 @@ aging_m <- function(turtles){
   turtles@.Data[turtles@.Data[, "age"] > 24, "agecl"] <- 2
   return(turtles)
 }
+
+
+
+#----------------------------------------------------------------
+# initialisation (time base = year)
+abm_init_y <- function(init_pop, world){
+  boar <- createTurtles(n = length(init_agecls), world = world,
+                        breed = "wildboar",
+                        color = rep("red", length(init_agecls)))
+  boar <- turtlesOwn(turtles = boar, tVar = "age",
+                     tVal = init_agecls)
+  boar <- turtlesOwn(turtles = boar, tVar = "agecl",
+                     tVal = init_agecls)
+}
+
+

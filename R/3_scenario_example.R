@@ -67,7 +67,7 @@ scen1 <- sim_scen_boar(mypop)
 saveRDS(scen1, file = "./data/interim/scen1.RDS")
 
 scen1
-#head(scen1$result[[1]][[3]])
+head(scen1$result[[1]][[1]])
 
 #-----------------------------------------------------
 # process results

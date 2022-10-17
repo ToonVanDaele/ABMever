@@ -1,7 +1,6 @@
-# Compare population matrix and individual based model
+# Reconstruction of Pallemaerts 2022
 
-# This script compares the results of both approaches with
-# similar population parameters
+# Comparision of models with results in matrix and ABM
 
 library(tidyverse)
 library(NetLogoR)
@@ -13,22 +12,23 @@ source("R/functions_matrix.R")
 #---------------------------------
 # Set overall demographic parameters
 ageclasses <- c("Juvenile", "Yearling", "Adult")
-nboar0 <- 1000    # initial population size
-max_year <- 15    # number of years to simulate
+nboar0 <- 100    # initial population size
+max_year <- 10    # number of years to simulate
 
-# Survival rate
-S <- c(0.6, 0.8, 0.9) # yearly survival probability
-# Fertility rate
-F <- c(0.1, 0.2, 0.5) # yearly fertility
-# Harvest rate
-H <- c(0, 0, 0)
+# Demographic parameters (table 10, p.30)
 
+S <- c(0.697, 0.353, 0.367) # jaarlijkse overleving (hunting included)
+
+e <- c(4.21, 5.44, 6.12)    # gemiddeld aantal embryo's
+r <- c(0.5, 0.9, 0.95)      # proportie reproducerend
+F <- r * e                  # jaarlijkse fertiliteit
+
+H <- c(0,0,0)               # geen hunting. (Zit mee in S)
 #-----------------------------------------------------------
 # Set projection matrix (yearly)
 mat <- set_projmat_post(S = S, F = F, H = H)
 
-# Set initial ageclasses as stable stage without hunting
-# in order to be able to compare different huntig scenarios later on.
+# Set initial ageclasses as stable stage
 init_agecl <- stable.stage(mat$mat) * nboar0
 
 # run population model
@@ -38,7 +38,10 @@ out_m <- matrix_proj(A = mat$mat_h, n = init_agecl / 2, iterations = max_year + 
 ggplot(data = out_m, aes(x = time, y = n, color = agecl, group = agecl)) +
   geom_line()
 
-#--------------------------------------------------
+lambda(mat$mat)    # ok p.30
+stable.stage(mat$mat)  # ok figuur 8
+
+#--------------------------------------------
 # Parameters for ABM model
 
 # Surival monthly
@@ -46,22 +49,19 @@ Sm <- S^(1/12)
 # Fertility monthly --  nog te bekijken!!
 birth_month <- get_birth_month(csv_filename = "./data/input/birth_month.csv")
 Fm <- set_F(F = F, birth_month = birth_month) # by month
-# reproduction only in month 12
-# Fm <- matrix(data = 0, nrow = 12, ncol = 3, dimnames = list(NULL, ageclasses))
-# Fm[12,] <- F
-# Fm
 
 # Hunting monthly
 # Load all hunting scenario's from excel sheets
 Hscen <- get_hunting_scen(path = "./data/input/hunting_scenarios.xlsx")
-# We only use H0 - no hunting
+# We only use H0 - no hunting (Hunting is here included in the survival parameter)
 Hs <- Hscen[c("H0")]
 
 nsim <- 5   # number of simulations
 
+# Initial population
+init_agecl <- stable.stage(mat$mat) * nboar0
 # Set initial age distribution  (nog aan te passen!!)
 init_pop <- set_init_pop(init_agecl = init_agecl, birth_month = birth_month, Sm = Sm)
-#init_pop <- set_init_pop2(init_agecl = init_agecl)
 
 hist(init_pop$age / 12)
 
@@ -84,15 +84,14 @@ checktime(mypop)
 
 #-----------------------------------------------------
 # run full simulation
-scen_comp <- sim_scen_boar(mypop)
+scen_h4_3 <- sim_scen_boar(mypop)
 # store output
-saveRDS(scen_comp, file = "./data/interim/scen_comp.RDS")
+saveRDS(scen_h4_3, file = "./data/interim/scen_h4_3.RDS")
 
 #-----------------------------------------------------
 # process results
-#
-df_num <- get_numboar(scen_comp)
-#df_har <- get_harvest(scen_comp)
+
+df_num <- get_numboar(scen_h4_3)
 
 #----------------------------------------------------
 # plot matrix + abm
@@ -108,5 +107,11 @@ df_num %>%
   geom_line(data = out_m, aes(x = (time - 1) * 12 + 1, y = n, color = agecl, group = agecl)) +
   geom_point(data = out_m, aes(x = (time - 1) * 12 + 1, y = n, color = agecl, group = agecl))
 
+
+# Total population
+df_num %>%
+  group_by(time, sim) %>%
+  summarise(tot = sum(n)) %>%
+  ggplot(aes(x = time, y = tot, group = sim)) + geom_line()
 
 
