@@ -171,15 +171,12 @@ hunt <- function(turtles, H, time) {
 reproduce <- function(turtles = boar, F) {
   # Select female turtles of age > 10 months
   # reproduction (n) according to F value of respective age class
-  rturtle <- turtles@.Data %>%
-    as.data.frame() %>%
-    filter(sex == 1 & age > 10) %>%
-    mutate(n = rpois(n = nrow(.), lambda = F[.$agecl + 1])) %>%
-    filter(n > 0) %>%
-    dplyr::select(who, n)
+  who <- turtles@.Data[turtles@.Data[,"sex"] == 1 &
+                  turtles@.Data[,"age"] > 10, c("who", "agecl")]
+  n <- rpois(n = nrow(who), lambda = F[who[, "agecl"] + 1])
 
   # Hatch (add offspring to the population)
-  turtles <- hatch(turtles = turtles, who = rturtle$who, n = rturtle$n,
+  turtles <- hatch(turtles = turtles, who = who[,"who"], n = n,
                    breed = "newborn")
 
   # Set some variable values for the newborns
@@ -192,6 +189,7 @@ reproduce <- function(turtles = boar, F) {
                                                  NLcount(newborn), replace = TRUE)))
   return(turtles)
 }
+
 
 
 #--------------------------------------------------------------------
