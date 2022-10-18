@@ -262,14 +262,20 @@ df_num <- get_numboar(scen_sel)
 
 df_num %>%
   calc_lambda() %>%
-  mutate(agecl = str_split_fixed(pattern = "_")[1],
-         Hs = str_split_fixed(pattern = "_")[2]) %>%
-  group_by(Hs) %>%
-  summarise(mean = mean(gm_lambda_y),
+  mutate(temp = str_split_fixed(string = Hs, pattern = "_", n = 2)) %>%
+  mutate(agecl = temp[,1],
+         Hscen = temp[,2]) %>%
+  dplyr::select(-"temp") %>%
+  group_by(Hscen, agecl) %>%
+  summarise(lambda = mean(gm_lambda_y),
             p90 = quantile(gm_lambda_y, prob = 0.9),
             p10 = quantile(gm_lambda_y, prob = 0.1), .groups = "drop") %>%
-  mutate(Hs = as.numeric(levels(Hs))[Hs]) %>%
-  ggplot(aes(x = Hs, y = mean)) +
+  mutate(Hscen = as.numeric(Hscen)) %>%
+  ggplot(aes(x = Hscen, y = lambda, color = agecl)) +
   geom_smooth(aes(ymax = p90, ymin = p10), size = 0.5, stat = "identity") +
   scale_x_continuous(breaks = seq(0,1,0.1)) +
+  scale_y_continuous(limits = c(0, 2.5)) +
   geom_hline(yintercept = 1)
+
+
+#
