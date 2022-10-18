@@ -91,7 +91,8 @@ get_boar <- function(turtles){
 
   df <- turtles@.Data %>%
     as.data.frame() %>%
-    mutate(agecl = ifelse(agecl == -1, 0, agecl)) %>%   # aanpassen newborns = juvenile !!!!
+    #mutate(agecl = ifelse(agecl == -1, 0, agecl)) %>%   # aanpassen newborns = juvenile !!!!
+    filter(agecl >= 0) %>%
     group_by(sex, agecl) %>%
     summarise(n = n(), .groups = "drop") %>%
     mutate(sex = turtles@levels$sex[sex],
@@ -201,4 +202,18 @@ get_harvest <- function(mytb){
            agecl = as.factor(agecl),
            Hs = as.factor(Hs))
 }
+
+#---------------------------------------------------------
+calc_lambda <- function(df_num){
+
+  df <- df_num %>%
+    group_by(sim, Hs, time) %>%
+    summarise(ntot = sum(n), .groups = "drop_last") %>%
+    mutate(lambda = ntot / lag(ntot, 1)) %>%
+    summarise(gm_lambda_m = exp(mean(log(lambda), na.rm = TRUE)), .groups = "drop") %>%
+    mutate(gm_lambda_y = (gm_lambda_m ^ 12 ))
+  return(df)
+}
+
+
 

@@ -112,6 +112,14 @@ df_num %>%
 df_num %>%
   group_by(time, sim) %>%
   summarise(tot = sum(n)) %>%
-  ggplot(aes(x = time, y = tot, group = sim)) + geom_line()
+  ggplot(aes(x = time, y = tot, colour = as.factor(sim))) + geom_line()
+
+
+#------------------------------------------------------------
+# hoofdstuk 6
+#
+# Niet selectieve jacht  (figuur 14)
+
+
 
 
