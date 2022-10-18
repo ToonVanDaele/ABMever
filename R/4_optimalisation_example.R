@@ -9,6 +9,7 @@ library(tidyverse)
 library(NetLogoR)
 source("R/functions.R")
 source("R/functions_sim.R")
+source("R/functions_matrix.R")
 
 #---------------------------------
 # Set population parameters
@@ -23,15 +24,24 @@ F <- c(0, 0.1, 0.5) # yearly fertility
 birth_month <- get_birth_month(csv_filename = "./data/input/birth_month.csv")
 Fm <- set_F(F = F, birth_month = birth_month) # by month
 
-# Hunting (by month)
 # Load all hunting scenario's from excel sheets
 Hscen <- get_hunting_scen(path = "./data/input/hunting_scenarios.xlsx")
 
 # H0 - no hunting
-Hm <- Hscen[[c("H0")]]
+H0 <- Hscen[[c("H0")]]
 
-# Projection matrix (for stable stage)
-mat <- set_projmat_post(S = S, F = F, H = H)
+# We define 10 scenarios with increasing hunting pressure 0 -> 0.9
+Hvalues <- seq(from = 0, to = 0.9, by = 0.1)
+
+fdd <- function(value){
+
+  mm <- H0               # use H0 scenario as template
+  mm[,] <- value         # assign value
+  return(mm)
+}
+
+Hs <- map(.x = Hvalues, .f = fdd)
+names(Hs) <- Hvalues  # give the list a name
 
 # ----------------------------------------------------
 # ABM related parameters
@@ -39,6 +49,9 @@ mat <- set_projmat_post(S = S, F = F, H = H)
 nboar0 <- 100    # initial population size
 max_year <- 5    # number of years to simulate
 nsim <- 4        # number of simulations per scenario
+
+# Create projection matrix (for stable stage as initial population)
+mat <- set_projmat_post(S = S, F = F, H = c(0, 0, 0))
 
 # Set initial age distribution
 init_agecl <- stable.stage(mat$mat) * nboar0
@@ -64,8 +77,8 @@ checktime(mypop)
 
 #-----------------------------------------------------
 # run full simulation and store results
-scen1 <- sim_scen_boar(mypop)
-saveRDS(scen1, file = "./data/interim/scen1.RDS")
+scen_int <- sim_scen_boar(mypop)
+saveRDS(scen_int, file = "./data/interim/scen1.RDS")
 
 df_num <- get_numboar(scen)
 df_har <- get_harvest(scen)

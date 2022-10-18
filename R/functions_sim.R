@@ -174,7 +174,7 @@ reproduce <- function(turtles = boar, F) {
   # Select female turtles of age > 10 months
   # reproduction (n) according to F value of respective age class
   who <- turtles@.Data[turtles@.Data[,"sex"] == 1 &
-                  turtles@.Data[,"age"] > 10, c("who", "agecl")]
+                  turtles@.Data[,"age"] > 10, c("who", "agecl"), drop = FALSE]
   n <- rpois(n = nrow(who), lambda = F[who[, "agecl"] + 1])
 
   # Hatch (add offspring to the population)

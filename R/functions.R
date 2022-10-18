@@ -168,7 +168,7 @@ checktime <- function(mylist){
                                    Fm = mylist$Fm,
                                    world = mylist$world,
                                    Hm = mylist$Hs[[1]]) })
-  return(as.double(koffie[3] * nsim * length(Hs)))
+  return(as.double(koffie[3] * nsim * length(mylist$Hs)))
 }
 
 #-------------------------------------------------------------

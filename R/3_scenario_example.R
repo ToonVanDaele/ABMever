@@ -36,12 +36,12 @@ Hs <- Hscen[c("H1", "H3")]
 # ----------------------------------------------------
 # ABM related parameters
 
-nboar0 <- 1000    # initial population size
+nboar0 <- 500    # initial population size
 max_year <- 5    # number of years to simulate
 nsim <- 4        # number of simulations per scenario
 
-# Set initial age distribution  (nog aan te passen!!)
-init_pop <- set_init_pop(init_agecl = c(200, 100, 500),
+# Set initial age distribution
+init_pop <- set_init_pop(init_agecl = c(150, 150, 200),
                          birth_month = birth_month, Sm = Sm)
 
 # Create world (required, but not used)
