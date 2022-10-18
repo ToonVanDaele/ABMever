@@ -20,7 +20,9 @@ S <- c(0.81, 0.876, 0.876) # yearly survival probability (Toigo 2008)
 Sm <- S^(1/12)        # monthly survival probability
 
 # Fertility
-F <- c(0, 0.1, 0.5) # yearly fertility
+e <- c(4.21, 5.44, 6.12)    # gemiddeld aantal embryo's
+r <- c(0.5, 0.9, 0.95)      # proportie reproducerend
+F <- r * e
 birth_month <- get_birth_month(csv_filename = "./data/input/birth_month.csv")
 Fm <- set_F(F = F, birth_month = birth_month) # by month
 
@@ -31,8 +33,12 @@ Hscen <- get_hunting_scen(path = "./data/input/hunting_scenarios.xlsx")
 H0 <- Hscen[[c("H0")]]
 
 # We define 10 scenarios with increasing hunting pressure 0 -> 0.9
-Hvalues <- seq(from = 0, to = 0.9, by = 0.1)
+# 0 till 0.9 on a yearly basis
+Hy <- seq(from = 0, to = 0.9, by = 0.1)
+# This means on a monthly basis...
+Hm <- 1 - ((1 - Hy)^(1/12))
 
+# Helpfunctie om de waarden in een lijst van matrices te zetten
 fdd <- function(value){
 
   mm <- H0               # use H0 scenario as template
@@ -40,7 +46,7 @@ fdd <- function(value){
   return(mm)
 }
 
-Hs <- map(.x = Hvalues, .f = fdd)
+Hs <- map(.x = Hm, .f = fdd)
 names(Hs) <- Hvalues  # give the list a name
 
 # ----------------------------------------------------
@@ -78,28 +84,25 @@ checktime(mypop)
 #-----------------------------------------------------
 # run full simulation and store results
 scen_int <- sim_scen_boar(mypop)
-saveRDS(scen_int, file = "./data/interim/scen1.RDS")
+saveRDS(scen_int, file = "./data/interim/scen_int.RDS")
 
-df_num <- get_numboar(scen)
-df_har <- get_harvest(scen)
+df_num <- get_numboar(scen_int)
+df_har <- get_harvest(scen_int)
 
 #----------------------------------------------------
-# plot
 
-# Time series: number of female individuals by age class and hunting scenario
-df_num %>%
-  filter(sex == "F") %>%
-  group_by(time, agecl, Hs) %>%
-  summarise(mean = mean(n),
-            p90 = quantile(n, prob = 0.9),
-            p10 = quantile(n, prob = 0.1), .groups = "drop") %>%
-  ggplot(aes(x = time, group = paste(agecl, Hs), color = agecl, linetype = Hs)) +
-  geom_smooth(aes(y = mean, ymax = p90, ymin = p10), size = 0.5, stat = "identity")
+
+# Time series: number individuals by hunting scenario
 
 df_num %>%
-  group_by(sim, Hs, time) %>%
-  summarise(ntot = sum(n), .groups = "drop_last") %>%
-  view()
-  ggplot(aes(x = time, y = ntot, colour = as.factor(sim))) + geom_line()
+  calc_lambda() %>%
+  group_by(Hs) %>%
+  summarise(mean = mean(gm_lambda_y),
+            p90 = quantile(gm_lambda_y, prob = 0.9),
+            p10 = quantile(gm_lambda_y, prob = 0.1), .groups = "drop") %>%
+  mutate(Hs = as.numeric(levels(Hs))[Hs]) %>%
+  ggplot(aes(x = Hs, y = mean)) +
+    geom_smooth(aes(ymax = p90, ymin = p10), size = 0.5, stat = "identity") +
+  scale_x_continuous(breaks = seq(0,1,0.1)) +
+  geom_hline(yintercept = 1)
 
-calc_lambda(df_num)

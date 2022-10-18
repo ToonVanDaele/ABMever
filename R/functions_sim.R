@@ -67,7 +67,7 @@ sim_boar <- function(max_year = max_year, init_pop = init_pop,
 sim_scen_boar <- function(scenlist){
 
   df <- expand.grid(Hs = names(scenlist$Hs),
-                    sim = seq(from = 1, to = nsim),
+                    sim = seq(from = 1, to = scenlist$nsim),
                     result = list(NULL))
   df <- df %>%
     mutate(run = row.names(.)) %>%
