@@ -40,6 +40,9 @@ sim_boar <- function(max_year = max_year, init_pop = init_pop,
     }
   }
 
+  if (!NLany(boar)) warning("sim aborted early: reached 0 boar")
+  if (!NLany(boar)) warning("sim aborted early: reached max boar (5000)")
+
   # Process tracking data
   # Number of individuals
   df_numboar <- tracknum %>%
