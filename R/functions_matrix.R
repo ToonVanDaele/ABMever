@@ -1,10 +1,16 @@
-# Functions for population matrix
+# Functions for population matrices
 
 #--------------------------------------------------------
 # Create a projection matrix based on demographic parameters
 #
-# The matrix model is female only with a post-breeding sensus
-
+# The matrix model is female only with a post-breeding sensus and 3 age classes.
+#
+# S = Ssurvival for each ageclass (vector of length 3)
+# F = fertility for each ageclass (vector of length 3)
+# H = hunting for each ageclass (vector of length 3)
+#
+# return list with two 3x3 projection matrices, with and without hunting
+#
 set_projmat_post <- function(S = S, F = F, H = H){
 
   mat <- matrix(c(F[1]*S[1]*0.5, F[2]*S[2]*0.5,	F[3]*S[3]*0.5,
@@ -18,6 +24,12 @@ set_projmat_post <- function(S = S, F = F, H = H){
 
 #--------------------------------------------------------
 # Execute projection
+#
+# wrapper for pop.projection
+#
+# Output is similar to pop.projection but in a data frame with long format
+# column names: time, agecl, n
+#
 matrix_proj <- function(A, n, iterations){
 
   mm <- pop.projection(A = A, n = n, iterations = iterations)

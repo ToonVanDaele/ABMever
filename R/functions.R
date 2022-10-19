@@ -1,10 +1,11 @@
-# Function
+# Functions for (ABM) population models
 
 
 #-----------------------------------------------
 # Set initial ages
 
 set_init_pop <- function(init_agecl, birth_month, Sm){
+
 
   # The initial population should be as close to the stable stage population
   # of the (female only) matrix population model. This enables optimal
@@ -18,19 +19,29 @@ set_init_pop <- function(init_agecl, birth_month, Sm){
   # the distribution of births per month. This is corrected for the survival
   # during the months between birth and the start of the model.
 
-  df <- birth_month %>%
-    rownames_to_column(var = "a") %>%
-    mutate(a = as.numeric(a)) %>%
-    mutate(perc_0s = perc * Sm[1] ^ (13 - a),
-           perc_1s = perc * Sm[2] ^ (13 - a)) %>%
-    mutate_at(vars(perc_0s, perc_1s), funs(./ sum(.))) %>%
-    mutate(cl_0 = init_agecl[1] * perc_0s,
-           cl_1 = init_agecl[2] * perc_1s) %>%
-    mutate(cl_0_F = round(cl_0 / 2, 0),
-           cl_1_F = round(cl_1 / 2, 0)) %>%
-    mutate(cl_0_M = round(cl_0, 0) - cl_0_F,
-           cl_1_M = round(cl_1, 0) - cl_1_F)
+  # !!!This function works only correct for models which start 1 of January!!!!
 
+  # init_agecl = initial distribution in each age class (vector of lenght 3)
+  # birth_month = relatieve distribution of births during the year (vector of length 12)
+  # Sm = monthly survival for each age class (vector of length 3)
+  #
+  df <- birth_month %>%
+
+    # The age distribution of the juveniles and yearlings is according
+    # the birth distribution and the respective survival till the end of the month
+    rownames_to_column(var = "m") %>%   # create column with number of the month
+    mutate(m = as.numeric(m)) %>%
+    mutate(perc_0s = perc * Sm[1] ^ (13 - m), # birth+survival juveniles till end of year
+           perc_1s = perc * Sm[2] ^ (13 - m)) %>%   # idem for yearling
+    mutate_at(vars(perc_0s, perc_1s), funs(./ sum(.))) %>% # total surviving juv & yearling
+    mutate(cl_0 = init_agecl[1] * perc_0s,         # initial population juveniles
+           cl_1 = init_agecl[2] * perc_1s) %>%     # initial population yearling
+    mutate(cl_0_F = round(cl_0 / 2, 0),            # initial population juveniles female
+           cl_1_F = round(cl_1 / 2, 0)) %>%        # initial population yearling female
+    mutate(cl_0_M = round(cl_0, 0) - cl_0_F,       # initial population juveniles male
+           cl_1_M = round(cl_1, 0) - cl_1_F)       # initial population yearling male
+
+  # We put everything in seperated data frames
   agecl_0_F <- data.frame(age = rep(1:12, df[,"cl_0_F"]), sex = "F")
   agecl_1_F <- data.frame(age = rep(1:12, df[,"cl_1_F"]) + 12, sex = "F")
   agecl_0_M <- data.frame(age = rep(1:12, df[,"cl_0_M"]), sex = "M")
