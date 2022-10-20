@@ -7,7 +7,7 @@
 #
 #
 sim_boar <- function(max_year = max_year, init_pop = init_pop,
-                     Hm = Hm, Sm = Sm, Fm = Fm, world = world){
+                     Hm = Hm, Sm = Sm, Fm = Fm){
 
   # initialisation
   boar <- abm_init_m(init_pop = init_pop, world = world)
@@ -82,7 +82,6 @@ sim_scen_boar <- function(scenlist){
                      max_year = scenlist$max_year,
                      Sm = scenlist$Sm,
                      Fm = scenlist$Fm,
-                     world = scenlist$world,
                      Hm = scenlist$Hs[[df$Hs[i]]])
   df$result[i] <- list(outsim)
   }
@@ -92,7 +91,10 @@ sim_scen_boar <- function(scenlist){
 #--------------------------------------------------------------
 # Initialisation (time base = Month)
 
-abm_init_m <- function(init_pop, world){
+abm_init_m <- function(init_pop){
+
+  # Create world (required, but not used)
+  world <- createWorld(minPxcor = -5, maxPxcor = 5, minPycor = -5, maxPycor = 5)
 
   nb <- nrow(init_pop)  # number of individuals
   boar <- createTurtles(n = nb,
@@ -105,6 +107,9 @@ abm_init_m <- function(init_pop, world){
   boar <- turtlesOwn(turtles = boar,
                      tVar = "age",
                      tVal = init_pop$age)
+  boar <- turtlesOwn(turtles = boar,
+                     tVar = "newb",
+                     tVal = 0)
 
   init_age_cl <- init_pop$age %>%
     as.data.frame() %>%
@@ -181,6 +186,10 @@ reproduce <- function(turtles = boar, F) {
 
   if (nrow(who) > 0) {
     n <- rpois(n = nrow(who), lambda = F[who[, "agecl"] + 1])
+    # Months since new juveniles = 0 -> used to track turtles with dependent juveniles
+    whohasnewborn <- NLwith(agents = turtles, var = "who", val = who[n > 0, "who"])
+    NLset(turtles = turtles, agents = whohasnewborn, var = "newb", val = 0)
+
     # Hatch (add offspring to the population)
     turtles <- hatch(turtles = turtles, who = who[,"who"], n = n,
                    breed = "newborn")
@@ -212,14 +221,20 @@ aging_m <- function(turtles){
   turtles@.Data[turtles@.Data[, "age"] <= 12, "agecl"] <- 0
   turtles@.Data[turtles@.Data[, "age"] > 12, "agecl"] <- 1
   turtles@.Data[turtles@.Data[, "age"] > 24, "agecl"] <- 2
+
+  # All months since new newborns + 1
+  turtles@.Data[, "newb"] <- turtles@.Data[, "newb"] + 1
   return(turtles)
 }
 
-
-
 #----------------------------------------------------------------
 # initialisation (time base = year)
-abm_init_y <- function(init_pop, world){
+
+abm_init_y <- function(init_pop){
+
+  # Create world (required, but not used)
+  world <- createWorld(minPxcor = -5, maxPxcor = 5, minPycor = -5, maxPycor = 5)
+
   boar <- createTurtles(n = length(init_agecls), world = world,
                         breed = "wildboar",
                         color = rep("red", length(init_agecls)))

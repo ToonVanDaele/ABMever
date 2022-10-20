@@ -6,24 +6,26 @@
 
 set_init_pop <- function(init_agecl, birth_month, Sm){
 
-
-  # The initial population should be as close to the stable stage population
-  # of the (female only) matrix population model. This enables optimal
-  # comparision between BM and matrix models.
+  # To reduce the burn-in time, the initial population should be close to the
+  # stable stage population distribution. The distribution over the ageclasses
+  # we can derive from the (female only & yearly) matrix population model.
+  # The monthly ABM model requires initial ages at a month resolution.
   #
-  # Sex ratio is fixed to 50/50 for the initial population.
-  # Initial sex ratio could also be set randomly. This would introduce extra
-  # variability in the population.
+  # Sex ratio is fixed to 50/50 for the initial population. Sex ratio could be
+  # set randomly, but it would introduce variability in the initial population.
   #
-  # Initial age for classes 0 (juvenile) and 1 (yearling) are set according
-  # the distribution of births per month. This is corrected for the survival
-  # during the months between birth and the start of the model.
+  # Initial age for classes 0 (juvenile) and 1 (yearling) are set following
+  # the distribution of births per month. This is then corrected for the
+  # survival during the months between birth and the start of the model.
 
-  # !!!This function works only correct for models which start 1 of January!!!!
+  # !!For now, this function is only for models that start at 1st of January!!
 
   # init_agecl = initial distribution in each age class (vector of lenght 3)
   # birth_month = relatieve distribution of births during the year (vector of length 12)
   # Sm = monthly survival for each age class (vector of length 3)
+  #
+  # returns a dataframe with two columns: age, sex
+  # one record for each individual
   #
   df <- birth_month %>%
 
@@ -41,7 +43,7 @@ set_init_pop <- function(init_agecl, birth_month, Sm){
     mutate(cl_0_M = round(cl_0, 0) - cl_0_F,       # initial population juveniles male
            cl_1_M = round(cl_1, 0) - cl_1_F)       # initial population yearling male
 
-  # We put everything in seperated data frames
+  # We put everything in seperate data frames
   agecl_0_F <- data.frame(age = rep(1:12, df[,"cl_0_F"]), sex = "F")
   agecl_1_F <- data.frame(age = rep(1:12, df[,"cl_1_F"]) + 12, sex = "F")
   agecl_0_M <- data.frame(age = rep(1:12, df[,"cl_0_M"]), sex = "M")
@@ -57,6 +59,7 @@ set_init_pop <- function(init_agecl, birth_month, Sm){
   agecl_2_M <- data.frame(age = rgamma(n = sex_2_M, shape = 2, rate = 0.8) * 12 + 24,
                           sex = "M")
 
+  # rbind all data frames together
   init_pop <- bind_rows(agecl_0_F, agecl_0_M, agecl_1_F, agecl_1_M,
                         agecl_2_F, agecl_2_M)
 
@@ -102,7 +105,7 @@ get_boar <- function(turtles){
 
   df <- turtles@.Data %>%
     as.data.frame() %>%
-    #mutate(agecl = ifelse(agecl == -1, 0, agecl)) %>%   # aanpassen newborns = juvenile !!!!
+    #mutate(agecl = ifelse(agecl == -1, 0, agecl)) %>% # aanpassen newborns = juvenile !!!!
     filter(agecl >= 0) %>%
     group_by(sex, agecl) %>%
     summarise(n = n(), .groups = "drop") %>%
@@ -126,8 +129,6 @@ set_F <- function(F = F, birth_month){
 
   return(Fm)
 }
-
-
 
 #----------------------------------------------------------------------
 # Get geboortepiek
@@ -177,7 +178,6 @@ checktime <- function(mylist){
                                    max_year = mylist$max_year,
                                    Sm = mylist$Sm,
                                    Fm = mylist$Fm,
-                                   world = mylist$world,
                                    Hm = mylist$Hs[[1]]) })
   return(as.double(koffie[3] * nsim * length(mylist$Hs)))
 }
@@ -215,6 +215,9 @@ get_harvest <- function(mytb){
 }
 
 #---------------------------------------------------------
+# Calculate lambda based on the output of the 'get_numboar' function
+
+
 calc_lambda <- function(df_num){
 
   df <- df_num %>%

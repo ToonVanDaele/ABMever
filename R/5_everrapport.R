@@ -65,9 +65,6 @@ init_pop <- set_init_pop(init_agecl = init_agecl, birth_month = birth_month, Sm 
 
 hist(init_pop$age / 12)
 
-# Create world (required, but not used)
-world <- createWorld(minPxcor = -5, maxPxcor = 5, minPycor = -5, maxPycor = 5)
-
 #----------------------------------------------------
 # Put everything together in a list for multiple scenarios
 mypop <- list(init_pop = init_pop,
@@ -75,8 +72,7 @@ mypop <- list(init_pop = init_pop,
               nsim = nsim,
               Sm = Sm,
               Fm = Fm,
-              Hs = Hs,
-              world = world)
+              Hs = Hs)
 
 # --------------------------------------------------
 # run a single simulation to estimate required time (seconds)
@@ -173,8 +169,7 @@ mypop <- list(init_pop = init_pop,
               nsim = nsim,
               Sm = Sm,
               Fm = Fm,
-              Hs = Hs,
-              world = world)
+              Hs = Hs)
 
 checktime(mypop)
 
@@ -245,8 +240,7 @@ mypop <- list(init_pop = init_pop,
               nsim = nsim,
               Sm = Sm,
               Fm = Fm,
-              Hs = Hsel,
-              world = world)
+              Hs = Hsel)
 
 checktime(mypop)
 
