@@ -10,7 +10,7 @@ sim_boar <- function(max_year = max_year, init_pop = init_pop,
                      Hm = Hm, Sm = Sm, Fm = Fm){
 
   # initialisation
-  boar <- abm_init_m(init_pop = init_pop, world = world)
+  boar <- abm_init_m(init_pop = init_pop)
   tracknum <- NULL
   trackhunt <<- NULL
 
