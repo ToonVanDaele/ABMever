@@ -157,7 +157,7 @@ get_birth_month <- function(csv_filename){
 get_hunting_scen <- function(path){
 
   f <- function(path, sheet){
-    df <- readxl::read_excel(path = path, sheet = sheet)
+    df <- readxl::read_excel(path = path, sheet = sheet, range = "A1:H13")
     return(as.matrix(df))
   }
 
@@ -172,14 +172,14 @@ get_hunting_scen <- function(path){
 
 # Run a single simulation to estimate the total simulation time (seconds)
 
-checktime <- function(mylist){
+checktime <- function(init_pop, max_year, Sm, Fm, Hs, nsim){
 
-  koffie <- system.time({ sim_boar(init_pop = mylist$init_pop,
-                                   max_year = mylist$max_year,
-                                   Sm = mylist$Sm,
-                                   Fm = mylist$Fm,
-                                   Hm = mylist$Hs[[1]]) })
-  return(as.double(koffie[3] * nsim * length(mylist$Hs)))
+  koffie <- system.time({ sim_boar(init_pop = init_pop,
+                                   max_year = max_year,
+                                   Sm = Sm,
+                                   Fm = Fm,
+                                   Hm = Hs[[1]]) })
+  return(as.double(koffie[3] * nsim * length(Hs)))
 }
 
 #-------------------------------------------------------------
@@ -196,6 +196,7 @@ get_numboar <- function(mytb){
   mutate(sex = as.factor(sex),
          agecl = as.factor(agecl),
          Hs = as.factor(Hs))
+  return(df_num)
 }
 
 #-------------------------------------------------------------
@@ -212,7 +213,26 @@ get_harvest <- function(mytb){
     mutate(sex = as.factor(sex),
            agecl = as.factor(agecl),
            Hs = as.factor(Hs))
+  return(df_num)
 }
+
+#-------------------------------------------------------------
+# process output - get age distribution
+
+get_agedistr <- function(mytb){
+
+  df_age <- mytb$result %>%
+    map_dfr("age_distr", .id = "rowname") %>%
+    left_join(mytb %>%
+                dplyr::select(Hs, sim) %>%
+                rownames_to_column(),
+              by = "rowname") %>%
+    as_tibble()
+  return(df_age)
+}
+
+
+
 
 #---------------------------------------------------------
 # Calculate lambda based on the output of the 'get_numboar' function

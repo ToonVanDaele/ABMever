@@ -29,8 +29,8 @@ Fm <- set_F(F = F, birth_month = birth_month) # by month
 # Load all hunting scenario's from excel sheets
 Hscen <- get_hunting_scen(path = "./data/input/hunting_scenarios.xlsx")
 
-# H0 - no hunting
-H0 <- Hscen[[c("H0")]]
+# N - no hunting
+N <- Hscen[[c("N")]]
 
 # We define 10 scenarios with increasing hunting pressure 0 -> 0.9
 # 0 till 0.9 on a yearly basis
@@ -41,13 +41,13 @@ Hm <- 1 - ((1 - Hy)^(1/12))
 # Helpfunctie om de waarden in een lijst van matrices te zetten
 fdd <- function(value){
 
-  mm <- H0               # use H0 scenario as template
-  mm[,] <- value         # assign value
+  mm <- N                  # use N (no hunting) scenario as template
+  mm[,] <- round(value, 4) # assign value
   return(mm)
 }
 
 Hs <- map(.x = Hm, .f = fdd)
-names(Hs) <- Hvalues  # give the list a name
+names(Hs) <- Hy  # give the list a name
 
 # ----------------------------------------------------
 # ABM related parameters
@@ -64,29 +64,21 @@ init_agecl <- stable.stage(mat$mat) * nboar0
 init_pop <- set_init_pop(init_agecl = init_agecl,
                          birth_month = birth_month, Sm = Sm)
 
-#----------------------------------------------------
-# Put everything together in a list for multiple scenarios
-mypop <- list(init_pop = init_pop,
-              max_year = max_year,
-              nsim = nsim,
-              Sm = Sm,
-              Fm = Fm,
-              Hs = Hs)
-
-# --------------------------------------------------
-# run a single simulation to estimate required time (seconds)
-checktime(mypop)
-
 #-----------------------------------------------------
 # run full simulation and store results
-scen_int <- sim_scen_boar(mypop)
+scen_int <- sim_scen_boar(init_pop = init_pop,
+                          max_year = max_year,
+                          nsim = nsim,
+                          Sm = Sm,
+                          Fm = Fm,
+                          Hs = Hs,
+                          dochecktime = TRUE)
 saveRDS(scen_int, file = "./data/interim/scen_int.RDS")
 
 df_num <- get_numboar(scen_int)
 df_har <- get_harvest(scen_int)
 
 #----------------------------------------------------
-
 
 # Time series: number individuals by hunting scenario
 

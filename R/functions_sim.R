@@ -67,10 +67,25 @@ sim_boar <- function(max_year = max_year, init_pop = init_pop,
 #---------------------------------------------------------
 # run simulation for 1 or more scenarios
 
-sim_scen_boar <- function(scenlist){
+sim_scen_boar <- function(init_pop = init_pop,
+                          max_year = max_year,
+                          Sm = Sm,
+                          Fm = Fm,
+                          Hs = Hs,
+                          nsim = nsim,
+                          dochecktime = FALSE){
 
-  df <- expand.grid(Hs = names(scenlist$Hs),
-                    sim = seq(from = 1, to = scenlist$nsim),
+  # Estimate runtime before full simulation
+  if (dochecktime == TRUE) {
+    cat("estimating runtime... \n")
+    est_time <- checktime(init_pop = init_pop, max_year = max_year, Sm = Sm,
+              Fm = Fm, Hs = Hs, nsim = nsim)
+    cat("Estimated runtime (seconds): ", est_time)
+  }
+
+  # Create dataframe with simulations to run
+  df <- expand.grid(Hs = names(Hs),
+                    sim = seq(from = 1, to = nsim),
                     result = list(NULL))
   df <- df %>%
     mutate(run = row.names(.)) %>%
@@ -78,11 +93,11 @@ sim_scen_boar <- function(scenlist){
 
   for (i in 1:nrow(df)) {
 
-  outsim <- sim_boar(init_pop = scenlist$init_pop,
-                     max_year = scenlist$max_year,
-                     Sm = scenlist$Sm,
-                     Fm = scenlist$Fm,
-                     Hm = scenlist$Hs[[df$Hs[i]]])
+  outsim <- sim_boar(init_pop = init_pop,
+                     max_year = max_year,
+                     Sm = Sm,
+                     Fm = Fm,
+                     Hm = Hs[[df$Hs[i]]])
   df$result[i] <- list(outsim)
   }
   return(df)
@@ -154,10 +169,12 @@ hunt <- function(turtles, H, time) {
   # Select wildboars only (newborns are not hunted -> analoog aan matrix model)
   t2 <- NLwith(agents = turtles, var = "breed", val = "wildboar")
   who_t2 <- of(agents = t2, var = "who") # newborns not included
-  age_t2 <- of(agents = t2, var = "agecl") # get ages
+  age_t2 <- of(agents = t2, var = "agecl") # get age class
+  agb_t2 <- of(agents = t2, var = "age") # get age
   sex_t2 <- of(agents = t2, var = "sex") # get sex
-  s <- ifelse(sex_t2 == "F", 1, 4)  # select female or male columns
-  tdie <- rbinom(n = NLcount(t2), size = 1, prob = H[age_t2 + s])
+  s <- ifelse(sex_t2 == "F", 1, 5)  # select female or male columns
+  a <- ifelse(agb_t2 > 60, 1, 0)     # select adult 5 column (instead adult 3)
+  tdie <- rbinom(n = NLcount(t2), size = 1, prob = H[age_t2 + s + a])
   who_dies <- who_t2[tdie == 1]    # ID's of hunted turtles
 
   # track hunted individuals

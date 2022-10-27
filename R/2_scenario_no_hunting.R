@@ -22,8 +22,8 @@ Fm <- set_F(F = F, birth_month = birth_month) # by month
 # Load all hunting scenario's from excel sheets
 Hscen <- get_hunting_scen(path = "./data/input/hunting_scenarios.xlsx")
 
-# We only use H0 - no hunting
-Hs <- Hscen[c("H0")]
+# We only use scenario "N" - no hunting
+Hs <- Hscen[c("N")]
 
 # ----------------------------------------------------
 # ABM related parameters
@@ -36,24 +36,16 @@ nsim <- 4        # number of simulations per scenario
 init_pop <- set_init_pop(init_agecl = c(200, 100, 500),
                          birth_month = birth_month, Sm = Sm)
 
-#----------------------------------------------------
-# Put everything together in a list for multiple scenarios
-mypop <- list(init_pop = init_pop,
-              max_year = max_year,
-              nsim = nsim,
-              Sm = Sm,
-              Fm = Fm,
-              Hs = Hs)
-
-# --------------------------------------------------
-# run a single simulation to estimate required time (seconds)
-checktime(mypop)
-
 #-----------------------------------------------------
 # run full simulation
-scen_H0 <- sim_scen_boar(mypop)
+scen_N <- sim_scen_boar(init_pop = init_pop,
+                        max_year = max_year,
+                        nsim = nsim,
+                        Sm = Sm,
+                        Fm = Fm,
+                        Hs = Hs)
 # store output
-saveRDS(scen_H0, file = "./data/interim/scen_H0.RDS")
+saveRDS(scen_N, file = "./data/interim/scen_N.RDS")
 
 #-----------------------------------------------------
 # process results
@@ -62,8 +54,7 @@ saveRDS(scen_H0, file = "./data/interim/scen_H0.RDS")
 # met rbind_rows kunnen resultaten van vroegere simulaties worden samengevoegd.
 # Zo moeten simulaties niet steeds opnieuw uitgevoerd worden.
 
-df_num <- get_numboar(scen_H0)
-df_har <- get_harvest(scen_H0)
+df_num <- get_numboar(scen_N)
 
 #----------------------------------------------------
 # plot

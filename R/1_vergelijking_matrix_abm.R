@@ -16,11 +16,11 @@ ageclasses <- c("Juvenile", "Yearling", "Adult")
 nboar0 <- 1000    # initial population size
 max_year <- 15    # number of years to simulate
 
-# Survival rate
+# Survival rate by age class
 S <- c(0.6, 0.8, 0.9) # yearly survival probability
-# Fertility rate
+# Fertility rate by age class
 F <- c(0.1, 0.2, 0.5) # yearly fertility
-# Harvest rate
+# Harvest rate by age class
 H <- c(0, 0, 0)
 
 #-----------------------------------------------------------
@@ -54,8 +54,8 @@ Fm <- set_F(F = F, birth_month = birth_month) # by month
 # Hunting monthly
 # Load all hunting scenario's from excel sheets
 Hscen <- get_hunting_scen(path = "./data/input/hunting_scenarios.xlsx")
-# We only use H0 - no hunting
-Hs <- Hscen[c("H0")]
+# We only use scenario "N" - no hunting
+Hs <- Hscen[c("N")]
 
 nsim <- 5   # number of simulations
 
@@ -65,22 +65,16 @@ init_pop <- set_init_pop(init_agecl = init_agecl, birth_month = birth_month, Sm 
 
 hist(init_pop$age / 12)
 
-#----------------------------------------------------
-# Put everything together in a list for multiple scenarios
-mypop <- list(init_pop = init_pop,
-              max_year = max_year,
-              nsim = nsim,
-              Sm = Sm,
-              Fm = Fm,
-              Hs = Hs)
-
-# --------------------------------------------------
-# run a single simulation to estimate required time (seconds)
-checktime(mypop)
-
 #-----------------------------------------------------
 # run full simulation
-scen_comp <- sim_scen_boar(mypop)
+scen_comp <- sim_scen_boar(init_pop = init_pop,
+                           max_year = max_year,
+                           nsim = nsim,
+                           Sm = Sm,
+                           Fm = Fm,
+                           Hs = Hs,
+                           dochecktime = TRUE)
+
 # store output
 saveRDS(scen_comp, file = "./data/interim/scen_comp.RDS")
 
@@ -102,6 +96,3 @@ df_num %>%
   geom_smooth(aes(y = mean, ymax = p90, ymin = p10), size = 0.5, stat = "identity") +
   geom_line(data = out_m, aes(x = (time - 1) * 12 + 1, y = n, color = agecl, group = agecl)) +
   geom_point(data = out_m, aes(x = (time - 1) * 12 + 1, y = n, color = agecl, group = agecl))
-
-
-

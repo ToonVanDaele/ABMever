@@ -1,4 +1,4 @@
-# Reconstruction of Pallemaerts 2022
+# Reconstruction of Pallemaerts with ABM 2022
 
 # Comparision of models with results in matrix and ABM
 
@@ -53,8 +53,8 @@ Fm <- set_F(F = F, birth_month = birth_month) # by month
 # Hunting monthly
 # Load all hunting scenario's from excel sheets
 Hscen <- get_hunting_scen(path = "./data/input/hunting_scenarios.xlsx")
-# We only use H0 - no hunting (Hunting is here included in the survival parameter)
-Hs <- Hscen[c("H0")]
+# We only use N (no hunting) (Hunting is here included in the survival parameter)
+Hs <- Hscen[c("N")]
 
 nsim <- 5   # number of simulations
 
@@ -65,22 +65,14 @@ init_pop <- set_init_pop(init_agecl = init_agecl, birth_month = birth_month, Sm 
 
 hist(init_pop$age / 12)
 
-#----------------------------------------------------
-# Put everything together in a list for multiple scenarios
-mypop <- list(init_pop = init_pop,
-              max_year = max_year,
-              nsim = nsim,
-              Sm = Sm,
-              Fm = Fm,
-              Hs = Hs)
-
-# --------------------------------------------------
-# run a single simulation to estimate required time (seconds)
-checktime(mypop)
-
 #-----------------------------------------------------
 # run full simulation
-scen_h4_3 <- sim_scen_boar(mypop)
+scen_h4_3 <- sim_scen_boar(init_pop = init_pop,
+                           max_year = max_year,
+                           nsim = nsim,
+                           Sm = Sm,
+                           Fm = Fm,
+                           Hs = Hs)
 # store output
 saveRDS(scen_h4_3, file = "./data/interim/scen_h4_3.RDS")
 
@@ -110,7 +102,6 @@ df_num %>%
   summarise(tot = sum(n)) %>%
   ggplot(aes(x = time, y = tot, colour = as.factor(sim))) + geom_line()
 
-
 #------------------------------------------------------------
 # hoofdstuk 6
 #
@@ -127,10 +118,9 @@ F <- r * e
 birth_month <- get_birth_month(csv_filename = "./data/input/birth_month.csv")
 Fm <- set_F(F = F, birth_month = birth_month) # by month
 
-
 # Hunting
 # Get 0 hunting as a template
-H0 <- Hscen[[c("H0")]]
+N <- Hscen[[c("N")]]
 
 # We define 10 scenarios with increasing hunting pressure 0 -> 0.9 (yearly basis)
 Hy <- seq(from = 0, to = 0.9, by = 0.1)
@@ -140,7 +130,7 @@ Hm <- 1 - ((1 - Hy)^(1/12))
 
 # Helpfunctie om de waarden in een lijst van matrices te zetten
 fdd <- function(value){
-  mm <- H0               # use H0 scenario as template
+  mm <- N               # use "N" scenario as template
   mm[,] <- value         # assign value
   return(mm)
 }
@@ -163,18 +153,15 @@ init_agecl <- stable.stage(mat$mat) * nboar0
 init_pop <- set_init_pop(init_agecl = init_agecl,
                          birth_month = birth_month, Sm = Sm)
 
-# Put everything together in a list for multiple scenarios
-mypop <- list(init_pop = init_pop,
-              max_year = max_year,
-              nsim = nsim,
-              Sm = Sm,
-              Fm = Fm,
-              Hs = Hs)
-
-checktime(mypop)
-
 # run full simulation and store results
-scen_int <- sim_scen_boar(mypop)
+scen_int <- sim_scen_boar(init_pop = init_pop,
+                          max_year = max_year,
+                          nsim = nsim,
+                          Sm = Sm,
+                          Fm = Fm,
+                          Hs = Hs,
+                          dochecktime = TRUE)
+
 saveRDS(scen_int, file = "./data/interim/scen_int.RDS")
 
 df_num <- get_numboar(scen_int)
@@ -210,13 +197,13 @@ df$Hm <- 1 - ((1 - df$Hy)^(1/12))
 
 # Helpfunctie om de waarden in een lijst van matrices te zetten
 fdd2 <- function(value, agecl){
-  mm <- H0                                 # use H0 scenario as template
-  mycol <- paste0(agecl, c("F", "M"))  # in the ageclass column for M & F
-  mm[,mycol] <- value               # assign value
+  mm <- N                                              # "N" scenario as template
+  mycol <- colnames(N)[str_detect(colnames(N), agecl)] # select ageclass columns
+  mm[,mycol] <- value                                  # assign value
   return(mm)
 }
 
-Hsel <- map2(.x = df$Hm, .y = df$agecl, .f = fdd2)
+Hsel <- map2(.x = df$Hm, .y = as.character(df$agecl), .f = fdd2)
 names(Hsel) <- paste(df$agecl, df$Hy, sep = "_")  # give the elements in the list a name
 
 # ----------------------------------------------------
@@ -234,18 +221,14 @@ init_agecl <- stable.stage(mat$mat) * nboar0
 init_pop <- set_init_pop(init_agecl = init_agecl,
                          birth_month = birth_month, Sm = Sm)
 
-# Put everything together in a list for multiple scenarios
-mypop <- list(init_pop = init_pop,
-              max_year = max_year,
-              nsim = nsim,
-              Sm = Sm,
-              Fm = Fm,
-              Hs = Hsel)
-
-checktime(mypop)
-
 # run full simulation and store results
-scen_sel <- sim_scen_boar(mypop)
+scen_sel <- sim_scen_boar(init_pop = init_pop,
+                          max_year = max_year,
+                          nsim = nsim,
+                          Sm = Sm,
+                          Fm = Fm,
+                          Hs = Hsel,
+                          dochecktime = TRUE)
 saveRDS(scen_sel, file = "./data/interim/scen_sel.RDS")
 
 df_num <- get_numboar(scen_sel)
@@ -271,5 +254,104 @@ df_num %>%
   scale_y_continuous(limits = c(0, 2.5)) +
   geom_hline(yintercept = 1)
 
+#-------------------------------------------------
 
-#
+# Hoofdstuk 7 - Afschotregimes en absolute aantallen
+
+# Select 'afschotscenarios' (tabel 15, p. 46)
+Hs <- Hscen[c("N", "H0", "H1", "H2", "H3", "H4", "H5", "H6")]
+
+# ABM related parameters
+nboar0 <- 1000    # initial population size
+max_year <- 10    # number of years to simulate
+nsim <- 5         # number of simulations per scenario
+
+# Set initial age distribution
+init_agecl <- stable.stage(mat$mat) * nboar0
+init_pop <- set_init_pop(init_agecl = init_agecl,
+                         birth_month = birth_month, Sm = Sm)
+
+# run full simulation and store results
+scen_ch7 <- sim_scen_boar(init_pop = init_pop,
+                          max_year = max_year,
+                          nsim = nsim,
+                          Sm = Sm,
+                          Fm = Fm,
+                          Hs = Hs,
+                          dochecktime = TRUE)
+
+saveRDS(scen_ch7, file = "./data/interim/scen_ch7.RDS")
+
+df_num <- get_numboar(scen_ch7)
+
+
+# Lambda per jachtscenario
+df_num %>%
+  calc_lambda() %>%
+  group_by(Hs) %>%
+  summarise(lambda = mean(gm_lambda_y),
+            p90 = quantile(gm_lambda_y, prob = 0.9),
+            p10 = quantile(gm_lambda_y, prob = 0.1), .groups = "drop") %>%
+  ggplot(aes(x = Hs, y = lambda)) + geom_point() +
+    geom_errorbar(aes(ymax = p90, ymin = p10), size = 0.5, stat = "identity") +
+    scale_y_continuous(limits = c(0, 2.5)) +
+    geom_hline(yintercept = 1)
+
+1000 * 2.24^5
+1000 * 2.24^10
+
+1000 * 1.37^5
+1000 * 1.37^10
+
+# Aantal individuen na 5 en 10 jaar  (max is 5000!!)
+
+
+df_num %>%
+  filter(time %in% c(24, 60, 120)) %>%
+  group_by(time, Hs, sim) %>%
+  summarise(n = sum(n), .groups = "drop_last") %>%
+  summarise(n_mean = median(n),
+            p90 = quantile(n, prob = 0.9),
+            p10 = quantile(n, prob = 0.1), .groups = "drop") %>%
+  mutate(year = time / 12)
+
+
+df_num %>%
+  filter(time %in% c(24, 60, 120)) %>%
+  group_by(time, Hs, sim) %>%
+  summarise(n = sum(n), .groups = "drop_last") %>%
+  summarise(n_mean = median(n),
+            p90 = quantile(n, prob = 0.9),
+            p10 = quantile(n, prob = 0.1), .groups = "drop") %>%
+  mutate(year = as.factor(time / 12)) %>%
+  ggplot(aes(x = Hs, y = n_mean, fill = year)) +
+    geom_bar(position = position_dodge(), stat = "identity") +
+    geom_errorbar(aes(ymax = p90, ymin = p10), width = 0.5, position = position_dodge(.9))
+
+
+# Maximum age after 10 years
+
+df_age <- get_agedistr(scen_ch7)
+
+df_age %>%
+  mutate(age_y = round(age / 12, 0)) %>%
+  group_by(age_y, Hs, sim) %>%
+  summarise(n = n(), .groups = "drop_last") %>%
+  summarise(n = mean(n)) %>%
+  ggplot(aes(x = age_y, y = n, group = Hs, colour = Hs)) + geom_line()
+
+df_age %>%
+  mutate(age_y = round(age / 12, 0)) %>%
+  group_by(age_y, Hs, sim) %>%
+  summarise(n = n(), .groups = "drop_last") %>%
+  summarise(n = mean(n)) %>%
+  ggplot(aes(x = age_y, y = n, group = Hs, colour = Hs)) + geom_density()
+
+
+# max age
+df_age %>%
+  group_by(Hs, sim) %>%
+  summarise(max_age = max(age), .groups = "drop_last") %>%
+  summarise(max_age = mean(max_age)) %>%
+  mutate(age_y = round(max_age / 12, 0))
+
