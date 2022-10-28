@@ -13,12 +13,13 @@ sim_boar <- function(max_year = max_year, init_pop = init_pop,
   boar <- abm_init_m(init_pop = init_pop)
   tracknum <- NULL
   trackhunt <<- NULL
+  max_month <- max_year * 12 + 1
 
   time <- 1
   year <- 1
   month <- 1   # In welke maand starten?
 
-  while (NLany(boar) & NLcount(boar) < 5000 & year <= max_year) {
+  while (NLany(boar) & NLcount(boar) < 5000 & time <= max_month) {
     #  print(paste(year, month))
 
     # track number of individuals in each age class
@@ -54,13 +55,12 @@ sim_boar <- function(max_year = max_year, init_pop = init_pop,
     mutate(time = as.integer(time))
   trackhunt <<- NULL
 
-  # store age distribution at the end of the simulation
+  # store population at the end of the simulation
   age_distr <- boar@.Data %>%
-    as.data.frame() %>%
-    dplyr::select(age, agecl)
+    as.data.frame()
 
   return(list(df_numboar = df_numboar, df_harvest = df_harvest,
-              age_distr = age_distr))
+              df_pop = df_pop))
 }
 
 
