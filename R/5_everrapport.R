@@ -191,7 +191,7 @@ df_num %>%
 # on each age class  (3 * 10 scenarios)
 
 df <- expand.grid(agecl = ageclasses,
-                  Hy = seq(from = 0, to = 0.9, by = 0.1))
+                  Hy = c(seq(from = 0, to = 0.9, by = 0.1), 0.95))
 
 # On a monthly basis this means...
 df$Hm <- 1 - ((1 - df$Hy)^(1/12))
@@ -207,22 +207,7 @@ fdd2 <- function(value, agecl){
 Hsel <- map2(.x = df$Hm, .y = as.character(df$agecl), .f = fdd2) # apply function
 names(Hsel) <- paste(df$agecl, df$Hy, sep = "_")  # give list elements a name
 
-# ----------------------------------------------------
-# ABM related parameters
-
-nboar0 <- 100    # initial population size
-max_year <- 5    # number of years to simulate
-nsim <- 4        # number of simulations per scenario
-
-# Create projection matrix (for stable stage as initial population)
-mat <- set_projmat_post(S = S, F = F, H = c(0, 0, 0))
-
-# Set initial age distribution
-init_agecl <- stable.stage(mat$mat) * nboar0
-init_pop <- set_init_pop(init_agecl = init_agecl,
-                         birth_month = birth_month, Sm = Sm)
-
-# run full simulation and store results
+# run simulation and store results
 scen_sel <- sim_scen_boar(init_pop = init_pop,
                           max_year = max_year,
                           nsim = nsim,
@@ -237,7 +222,6 @@ df_num <- get_numboar(scen_sel)
 
 #----------------------------------------------------
 # Figuur 15 Exclusieve jacht
-
 df_num %>%
   calc_lambda(burnin = 24) %>%
   mutate(temp = str_split_fixed(string = Hs, pattern = "_", n = 2)) %>%
@@ -256,7 +240,6 @@ df_num %>%
   geom_hline(yintercept = 1)
 
 #-------------------------------------------------
-
 # Hoofdstuk 7 - Afschotregimes en absolute aantallen
 
 # Select 'afschotscenarios' (tabel 15, p. 46)
@@ -267,12 +250,7 @@ nboar0 <- 1000    # initial population size
 max_year <- 10    # number of years to simulate
 nsim <- 5         # number of simulations per scenario
 
-# Set initial age distribution
-init_agecl <- stable.stage(mat$mat) * nboar0
-init_pop <- set_init_pop(init_agecl = init_agecl,
-                         birth_month = birth_month, Sm = Sm)
-
-# run full simulation and store results
+# run simulation and store results
 scen_ch7 <- sim_scen_boar(init_pop = init_pop,
                           max_year = max_year,
                           nsim = nsim,
@@ -286,8 +264,14 @@ saveRDS(scen_ch7, file = "./data/interim/scen_ch7.RDS")
 
 df_num <- get_numboar(scen_ch7)
 
+# Population in time for each scenario
+df_num %>%
+  group_by(time, Hs, sim) %>%
+  summarise(tot = sum(n), .groups = "drop_last") %>%
+  summarise(mean_n = mean(tot), .groups = "drop") %>%
+  ggplot(aes(x = time, y = mean_n, colour = Hs)) + geom_line()
 
-# Lambda per jachtscenario
+# Show lambda for each hunting scenario
 df_num %>%
   calc_lambda(burnin = 24) %>%
   group_by(Hs) %>%
@@ -299,16 +283,15 @@ df_num %>%
     scale_y_continuous(limits = c(0, 2.5)) +
     geom_hline(yintercept = 1)
 
-# Aantal individuen na 5 en 10 jaar  (max is 5000!!)
+# Number of individuals after 2, 5 & 10 years
 df_num %>%
   filter(time %in% c(24, 60, 120)) %>%
   group_by(time, Hs, sim) %>%
   summarise(n = sum(n), .groups = "drop_last") %>%
-  summarise(n_mean = median(n),
-            p90 = quantile(n, prob = 0.9),
-            p10 = quantile(n, prob = 0.1), .groups = "drop") %>%
-  mutate(year = time / 12)
-
+  summarise(n_mean = median(n), .groups = "drop") %>%
+  mutate(year = time / 12) %>%
+  dplyr::select(year, Hs, n_mean) %>%
+  pivot_wider(names_from = Hs, values_from = n_mean)
 
 df_num %>%
   filter(time %in% c(24, 60, 120)) %>%
@@ -322,25 +305,17 @@ df_num %>%
     geom_bar(position = position_dodge(), stat = "identity") +
     geom_errorbar(aes(ymax = p90, ymin = p10), width = 0.5, position = position_dodge(.9))
 
-
 # Maximum age after 10 years
-
 df_age <- get_agedistr(scen_ch7)
 
 df_age %>%
   mutate(age_y = round(age / 12, 0)) %>%
-  group_by(age_y, Hs, sim) %>%
+  group_by(Hs, age_y, sim) %>%
   summarise(n = n(), .groups = "drop_last") %>%
-  summarise(n = mean(n)) %>%
-  ggplot(aes(x = age_y, y = n, group = Hs, colour = Hs)) + geom_line()
-
-df_age %>%
-  mutate(age_y = round(age / 12, 0)) %>%
-  group_by(age_y, Hs, sim) %>%
-  summarise(n = n(), .groups = "drop_last") %>%
-  summarise(n = mean(n)) %>%
-  ggplot(aes(x = age_y, y = n, group = Hs, colour = Hs)) + geom_density()
-
+  summarise(n = mean(n), .groups = "drop_last") %>%
+  mutate(rel_n = n / sum(n)) %>%
+  ggplot(aes(x = age_y, y = rel_n, group = Hs, colour = Hs)) + geom_line() +
+  scale_x_continuous(limits = c(0, 15))
 
 # max age
 df_age %>%
@@ -360,7 +335,8 @@ df_age %>%
 # zomerafschot is om schade te vermijden, minder om de populatie te reguleren
 # ? wat is de impact van het zomerafschot op
 
-# Waar je controle over hebt (qua jacht) is de verdeling van de aantallen over het jaar
-# en tussen de leeftijdsklassen
+# Waar je controle over hebt (qua jacht) zijn de absolute aantallen,
+# de relatieve verdeling over het jaar en tussen de leeftijdsklassen.
+# Er is geen controle over de ratios afschot t.a.v. de werkelijke populatie.
 
 
