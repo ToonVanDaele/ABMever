@@ -53,6 +53,7 @@ scen1 <- sim_scen_boar(init_pop = init_pop,
                        Hs = Hs,
                        dochecktime = TRUE)
 saveRDS(scen1, file = "./data/interim/scen1.RDS")
+#scen1 <- readRDS(file = "./data/interim/scen1.RDS")
 
 scen1
 head(scen1$result[[1]][[1]])
@@ -69,7 +70,12 @@ scen <- scen1 %>%
 scen
 
 df_num <- get_numboar(scen)
-df_har <- get_harvest(scen)
+df_har <- get_harvest(scen1)
+
+
+df_har %>%
+  filter(time > 23 & time < 36 & Hs == "T1" & sim == 1 & agecl == "Adult" & sex == "F")
+
 
 #----------------------------------------------------
 # plot
@@ -93,6 +99,99 @@ df_har %>%
             p10 = quantile(n, prob = 0.1)) %>%
   ggplot(aes(x = paste(agecl, Hs), y = mean)) + geom_point() +
       geom_errorbar(aes(ymax = p90, ymin = p10), size = 0.5, stat = "identity")
+
+# Cumulative harvest by age class and scenario
+df_har %>%
+  group_by(agecl, Hs, time) %>%
+  summarise(mean = mean(n), .groups = "drop_last") %>%
+  ungroup() %>%
+  complete(time, Hs, agecl, fill = list(mean = 0)) %>%
+  group_by(agecl, Hs) %>%
+  mutate(n = cumsum(mean)) %>%
+  ggplot(aes(x = time, y = n, color = agecl, linetype = Hs)) +
+  geom_line()
+
+
+
+#----------------------------------------------------
+# Scenario example absolute numbers
+
+
+# Load hunting scenarios with absolute numbers
+Hscen_abs <- get_hunting_scen(path = "./data/input/hunting_scenarios_abs.xlsx")
+
+names(Hscen_abs)
+
+#-----------------------------------------------------
+# run full simulation and store results
+scen_abs <- sim_scen_boar(init_pop = init_pop,
+                       max_year = max_year,
+                       nsim = nsim,
+                       Sm = Sm,
+                       Fm = Fm,
+                       Hs = Hscen_abs,
+                       hunt_abs = TRUE,     # Hunting is in absolute numbers!!
+                       dochecktime = TRUE)
+saveRDS(scen_abs, file = "./data/interim/scen_abs.RDS")
+#scen_abs <- readRDS(file = "./data/interim/scen_abs.RDS")
+
+#-----------------------------------------------------
+# process results
+#
+# Alle output (list) wordt bewaard in een tibble.
+# Met rbind_rows voegen we resultaten van vorige simulaties toe.
+scenN <- readRDS(file = "./data/interim/scen_N.RDS") #scenario no hunting
+
+scen <- scen_abs %>%
+  bind_rows(scenN)
+scen
+
+df_num <- get_numboar(scen_abs)
+
+df_num %>%
+  filter(time == 24 & sim == 1 & Hs == "abs1") %>%
+  summarise(n = sum(n))
+
+
+df_har <- get_harvest(scen_abs)
+
+unique(df_har$Hs)
+
+df_har %>%
+  filter(time > 23 & time < 36 & Hs == "abs1" & sim == 1 & agecl == "juvenile")
+
+
+v <- df_har %>%
+  filter(time > 23 & time < 36 & Hs == "abs1" & sim == 1) %>%
+  group_by(agecl) %>%
+  summarise(n = sum(n)) %>%
+  pull(n)
+
+(v / 2514 ) * 1000
+
+
+#----------------------------------------------------
+# plot
+
+# Time series: number of female individuals by age class and hunting scenario
+df_num %>%
+  filter(sex == "F") %>%
+  group_by(time, agecl, Hs) %>%
+  summarise(mean = mean(n),
+            p90 = quantile(n, prob = 0.9),
+            p10 = quantile(n, prob = 0.1), .groups = "drop") %>%
+  ggplot(aes(x = time, group = paste(agecl, Hs), color = agecl, linetype = Hs)) +
+  geom_smooth(aes(y = mean, ymax = p90, ymin = p10), size = 0.5, stat = "identity")
+
+# Total harvest by age class and scenario
+df_har %>%
+  group_by(agecl, Hs, sim) %>%
+  summarise(n = sum(n), .groups = "drop_last") %>%
+  summarise(mean = mean(n),
+            p90 = quantile(n, prob = 0.9),
+            p10 = quantile(n, prob = 0.1)) %>%
+  ggplot(aes(x = paste(agecl, Hs), y = mean)) + geom_point() +
+  geom_errorbar(aes(ymax = p90, ymin = p10), size = 0.5, stat = "identity")
 
 # Cumulative harvest by age class and scenario
 df_har %>%

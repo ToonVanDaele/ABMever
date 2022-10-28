@@ -7,7 +7,7 @@
 #
 #
 sim_boar <- function(max_year = max_year, init_pop = init_pop,
-                     Hm = Hm, Sm = Sm, Fm = Fm){
+                     Sm = Sm, Fm = Fm, Hm = Hm, hunt_abs = FALSE){
 
   # initialisation
   boar <- abm_init_m(init_pop = init_pop)
@@ -26,7 +26,7 @@ sim_boar <- function(max_year = max_year, init_pop = init_pop,
     tracknum[[time]] <- d
 
     # events
-    boar <- hunt(turtles = boar, H = Hm[month,], time)
+    boar <- hunt(turtles = boar, H = Hm[month,], time, hunt_abs = hunt_abs)
     boar <- reproduce(turtles = boar, F = Fm[month,])
     boar <- mortality(boar, Sm)
     boar <- aging_m(boar)
@@ -69,14 +69,15 @@ sim_boar <- function(max_year = max_year, init_pop = init_pop,
 
 sim_scen_boar <- function(init_pop = init_pop,
                           max_year = max_year,
+                          nsim = nsim,
                           Sm = Sm,
                           Fm = Fm,
                           Hs = Hs,
-                          nsim = nsim,
+                          hunt_abs = FALSE,
                           dochecktime = FALSE){
 
   # Estimate runtime before full simulation
-  if (dochecktime == TRUE) {
+  if (dochecktime == TRUE & hunt_abs == FALSE) {
     cat("estimating runtime... \n")
     est_time <- checktime(init_pop = init_pop, max_year = max_year, Sm = Sm,
               Fm = Fm, Hs = Hs, nsim = nsim)
@@ -97,7 +98,8 @@ sim_scen_boar <- function(init_pop = init_pop,
                      max_year = max_year,
                      Sm = Sm,
                      Fm = Fm,
-                     Hm = Hs[[df$Hs[i]]])
+                     Hm = Hs[[df$Hs[i]]],
+                     hunt_abs = hunt_abs)
   df$result[i] <- list(outsim)
   }
   return(df)
@@ -165,17 +167,37 @@ mortality <- function(turtles, S) {
 #
 # Make sure the hunting probability is correct for the given time base
 #
-hunt <- function(turtles, H, time) {
+hunt <- function(turtles, H, time, hunt_abs = FALSE) {
   # Select wildboars only (newborns are not hunted -> analoog aan matrix model)
   t2 <- NLwith(agents = turtles, var = "breed", val = "wildboar")
-  who_t2 <- of(agents = t2, var = "who") # newborns not included
+  who_t2 <- of(agents = t2, var = "who") # newborns of current month not included
   age_t2 <- of(agents = t2, var = "agecl") # get age class
   agb_t2 <- of(agents = t2, var = "age") # get age
   sex_t2 <- of(agents = t2, var = "sex") # get sex
   s <- ifelse(sex_t2 == "F", 1, 5)  # select female or male columns
-  a <- ifelse(agb_t2 > 60, 1, 0)     # select adult 5 column (instead adult 3)
-  tdie <- rbinom(n = NLcount(t2), size = 1, prob = H[age_t2 + s + a])
-  who_dies <- who_t2[tdie == 1]    # ID's of hunted turtles
+  a <- ifelse(agb_t2 > 60, 1, 0)    # select adult 5 column (instead of adult 3)
+
+  if (hunt_abs == FALSE){  # hunting proportions
+    tdie <- rbinom(n = NLcount(t2), size = 1, prob = H[age_t2 + s + a])
+    who_dies <- who_t2[tdie == 1]    # ID's of hunted turtles
+  }else{    # hunting absolute numbers
+    jF <- who_t2[age_t2 == 0 & sex_t2 == "F"]
+    jM <- who_t2[age_t2 == 0 & sex_t2 == "M"]
+    yF <- who_t2[age_t2 == 1 & sex_t2 == "F"]
+    yM <- who_t2[age_t2 == 1 & sex_t2 == "M"]
+    a3F <-who_t2[age_t2 == 2 & sex_t2 == "F"]
+    a3M <-who_t2[age_t2 == 2 & sex_t2 == "M"]
+    a5F <-who_t2[age_t2 == 2 & sex_t2 == "F"]
+    a5M <-who_t2[age_t2 == 2 & sex_t2 == "M"]
+    who_dies <- c(sample(jF, size = min(H["juvenileF"], length(jF))),
+                  sample(jM, size = min(H["juvenileM"], length(jM))),
+                  sample(yF, size = min(H["yearlingF"], length(yF))),
+                  sample(yM, size = min(H["yearlingM"], length(yM))),
+                  sample(a3F, size = min(H["adult3F"], length(a3F))),
+                  sample(a3M, size = min(H["adult3M"], length(a3M))),
+                  sample(a5F, size = min(H["adult5F"], length(a5F))),
+                  sample(a5M, size = min(H["adult5M"], length(a5M))))
+  }
 
   # track hunted individuals
   harvest <- NLwith(agents = turtles, var = "who", val = who_dies)

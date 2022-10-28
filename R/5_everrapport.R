@@ -1,6 +1,6 @@
-# Reconstruction of Pallemaerts with ABM 2022
+# Reconstruction of Pallemaerts 2022 with ABM
 
-# Comparision of models with results in matrix and ABM
+# Comparision of the ABM models with results of population matrix
 
 library(tidyverse)
 library(NetLogoR)
@@ -17,13 +17,13 @@ max_year <- 10    # number of years to simulate
 
 # Demographic parameters (table 10, p.30)
 
-S <- c(0.697, 0.353, 0.367) # jaarlijkse overleving (hunting included)
+S <- c(0.697, 0.353, 0.367) # yearly survival (including hunting)
 
-e <- c(4.21, 5.44, 6.12)    # gemiddeld aantal embryo's
-r <- c(0.5, 0.9, 0.95)      # proportie reproducerend
-F <- r * e                  # jaarlijkse fertiliteit
+e <- c(4.21, 5.44, 6.12)    # average number of embryos
+r <- c(0.5, 0.9, 0.95)      # proportion of females reproducing
+F <- r * e                  # yearly fertility
 
-H <- c(0,0,0)               # geen hunting. (Zit mee in S)
+H <- c(0,0,0)               # no hunting. (hunting is included in S)
 #-----------------------------------------------------------
 # Set projection matrix (yearly)
 mat <- set_projmat_post(S = S, F = F, H = H)
@@ -32,6 +32,7 @@ mat <- set_projmat_post(S = S, F = F, H = H)
 init_agecl <- stable.stage(mat$mat) * nboar0
 
 # run population model
+# init_agecl / 2 as we use a female only model
 out_m <- matrix_proj(A = mat$mat_h, n = init_agecl / 2, iterations = max_year + 1)
 
 # Plot
@@ -46,27 +47,29 @@ stable.stage(mat$mat)  # ok figuur 8
 
 # Surival monthly
 Sm <- S^(1/12)
-# Fertility monthly --  nog te bekijken!!
+# Fertility monthly according the proportions of births by month
 birth_month <- get_birth_month(csv_filename = "./data/input/birth_month.csv")
 Fm <- set_F(F = F, birth_month = birth_month) # by month
 
 # Hunting monthly
-# Load all hunting scenario's from excel sheets
+# Load hunting scenario's from excel sheet
 Hscen <- get_hunting_scen(path = "./data/input/hunting_scenarios.xlsx")
-# We only use N (no hunting) (Hunting is here included in the survival parameter)
+# Select scenario "N" (no hunting) (Hunting is already included in S)
 Hs <- Hscen[c("N")]
 
-nsim <- 5   # number of simulations
+nsim <- 5   # number of simulations (=repetitions)
 
-# Initial population
-init_agecl <- stable.stage(mat$mat) * nboar0
-# Set initial age distribution  (nog aan te passen!!)
+# Create initial population
+# According stable stage and births by month
 init_pop <- set_init_pop(init_agecl = init_agecl, birth_month = birth_month, Sm = Sm)
 
-hist(init_pop$age / 12)
+init_pop %>%
+  as_tibble() %>%
+  ggplot(aes(x = age / 12)) + geom_histogram(binwidth = 1) +
+  scale_x_continuous(breaks = seq(0, 15,1))
 
 #-----------------------------------------------------
-# run full simulation
+# run ABM model
 scen_h4_3 <- sim_scen_boar(init_pop = init_pop,
                            max_year = max_year,
                            nsim = nsim,
@@ -75,6 +78,7 @@ scen_h4_3 <- sim_scen_boar(init_pop = init_pop,
                            Hs = Hs)
 # store output
 saveRDS(scen_h4_3, file = "./data/interim/scen_h4_3.RDS")
+#scen_h4_3 <- readRDS(file = "./data/interim/scen_h4_3.RDS")
 
 #-----------------------------------------------------
 # process results
@@ -95,12 +99,12 @@ df_num %>%
   geom_line(data = out_m, aes(x = (time - 1) * 12 + 1, y = n, color = agecl, group = agecl)) +
   geom_point(data = out_m, aes(x = (time - 1) * 12 + 1, y = n, color = agecl, group = agecl))
 
-
 # Total population
 df_num %>%
   group_by(time, sim) %>%
   summarise(tot = sum(n)) %>%
-  ggplot(aes(x = time, y = tot, colour = as.factor(sim))) + geom_line()
+  summarise(pop = mean(tot)) %>%
+  ggplot(aes(x = time, y = pop)) + geom_line()
 
 #------------------------------------------------------------
 # hoofdstuk 6
@@ -109,11 +113,11 @@ df_num %>%
 
 # Survival
 S <- c(0.81, 0.876, 0.876) # yearly survival probability (Toigo 2008)
-Sm <- S^(1/12)        # monthly survival probability
+Sm <- S^(1/12)             # monthly survival probability
 
 # Fertility
-e <- c(4.21, 5.44, 6.12)    # gemiddeld aantal embryo's  (tabel 3)
-r <- c(0.5, 0.9, 0.95)      # proportie reproducerend    (tabel 3)
+e <- c(4.21, 5.44, 6.12)    # average number of embryos  (tabel 3)
+r <- c(0.5, 0.9, 0.95)      # proportion females reproducing    (tabel 3)
 F <- r * e
 birth_month <- get_birth_month(csv_filename = "./data/input/birth_month.csv")
 Fm <- set_F(F = F, birth_month = birth_month) # by month
@@ -128,17 +132,16 @@ Hy <- seq(from = 0, to = 0.9, by = 0.1)
 # On a monthly basis this means...
 Hm <- 1 - ((1 - Hy)^(1/12))
 
-# Helpfunctie om de waarden in een lijst van matrices te zetten
+# Helpfunction to set the values in a list of matrices.
 fdd <- function(value){
-  mm <- N               # use "N" scenario as template
+  mm <- N                # use "N" scenario as template
   mm[,] <- value         # assign value
   return(mm)
 }
 
-Hs <- map(.x = Hm, .f = fdd)
+Hs <- map(.x = Hm, .f = fdd)   # apply help function to each element of Hm
 names(Hs) <- Hy  # give the elements in the list a name
 
-# ----------------------------------------------------
 # ABM related parameters
 
 nboar0 <- 100    # initial population size
@@ -153,7 +156,7 @@ init_agecl <- stable.stage(mat$mat) * nboar0
 init_pop <- set_init_pop(init_agecl = init_agecl,
                          birth_month = birth_month, Sm = Sm)
 
-# run full simulation and store results
+# run simulation and store results
 scen_int <- sim_scen_boar(init_pop = init_pop,
                           max_year = max_year,
                           nsim = nsim,
@@ -163,15 +166,14 @@ scen_int <- sim_scen_boar(init_pop = init_pop,
                           dochecktime = TRUE)
 
 saveRDS(scen_int, file = "./data/interim/scen_int.RDS")
+#scen_int <- readRDS(file = "./data/interim/scen_int.RDS")
 
 df_num <- get_numboar(scen_int)
 
 #----------------------------------------------------
-
 # Figuur 6.3.1. Niet selectieve jacht
-
 df_num %>%
-  calc_lambda() %>%
+  calc_lambda(burnin = 24) %>%
   group_by(Hs) %>%
   summarise(mean = mean(gm_lambda_y),
             p90 = quantile(gm_lambda_y, prob = 0.9),
@@ -183,11 +185,10 @@ df_num %>%
   geom_hline(yintercept = 1)
 
 #----------------------------------------------------
-#
 # 6.3.2.  Exclusieve jacht
 
-# We define 3 * 10 scenarios with increasing hunting pressure 0 -> 0.9 (yearly basis)
-# On each age class
+# We define scenarios with increasing hunting pressure 0 -> 0.9 (yearly basis)
+# on each age class  (3 * 10 scenarios)
 
 df <- expand.grid(agecl = ageclasses,
                   Hy = seq(from = 0, to = 0.9, by = 0.1))
@@ -195,16 +196,16 @@ df <- expand.grid(agecl = ageclasses,
 # On a monthly basis this means...
 df$Hm <- 1 - ((1 - df$Hy)^(1/12))
 
-# Helpfunctie om de waarden in een lijst van matrices te zetten
+# Helpfunction to set values in a list of matrices
 fdd2 <- function(value, agecl){
-  mm <- N                                              # "N" scenario as template
+  mm <- N                                              # "N" scenario (as template)
   mycol <- colnames(N)[str_detect(colnames(N), agecl)] # select ageclass columns
   mm[,mycol] <- value                                  # assign value
   return(mm)
 }
 
-Hsel <- map2(.x = df$Hm, .y = as.character(df$agecl), .f = fdd2)
-names(Hsel) <- paste(df$agecl, df$Hy, sep = "_")  # give the elements in the list a name
+Hsel <- map2(.x = df$Hm, .y = as.character(df$agecl), .f = fdd2) # apply function
+names(Hsel) <- paste(df$agecl, df$Hy, sep = "_")  # give list elements a name
 
 # ----------------------------------------------------
 # ABM related parameters
@@ -230,15 +231,15 @@ scen_sel <- sim_scen_boar(init_pop = init_pop,
                           Hs = Hsel,
                           dochecktime = TRUE)
 saveRDS(scen_sel, file = "./data/interim/scen_sel.RDS")
+#scen_sel <- readRDS(file = "./data/interim/scen_sel.RDS")
 
 df_num <- get_numboar(scen_sel)
 
 #----------------------------------------------------
-
 # Figuur 15 Exclusieve jacht
 
 df_num %>%
-  calc_lambda() %>%
+  calc_lambda(burnin = 24) %>%
   mutate(temp = str_split_fixed(string = Hs, pattern = "_", n = 2)) %>%
   mutate(agecl = temp[,1],
          Hscen = temp[,2]) %>%
@@ -281,31 +282,24 @@ scen_ch7 <- sim_scen_boar(init_pop = init_pop,
                           dochecktime = TRUE)
 
 saveRDS(scen_ch7, file = "./data/interim/scen_ch7.RDS")
+#scen_ch7 <- readRDS(file = "./data/interim/scen_ch7.RDS")
 
 df_num <- get_numboar(scen_ch7)
 
 
 # Lambda per jachtscenario
 df_num %>%
-  calc_lambda() %>%
+  calc_lambda(burnin = 24) %>%
   group_by(Hs) %>%
-  summarise(lambda = mean(gm_lambda_y),
-            p90 = quantile(gm_lambda_y, prob = 0.9),
-            p10 = quantile(gm_lambda_y, prob = 0.1), .groups = "drop") %>%
+  summarise(lambda = mean(gm_lambda_y, na.rm = TRUE),
+            p90 = quantile(gm_lambda_y, prob = 0.9, na.rm = TRUE),
+            p10 = quantile(gm_lambda_y, prob = 0.1, na.rm = TRUE), .groups = "drop") %>%
   ggplot(aes(x = Hs, y = lambda)) + geom_point() +
     geom_errorbar(aes(ymax = p90, ymin = p10), size = 0.5, stat = "identity") +
     scale_y_continuous(limits = c(0, 2.5)) +
     geom_hline(yintercept = 1)
 
-1000 * 2.24^5
-1000 * 2.24^10
-
-1000 * 1.37^5
-1000 * 1.37^10
-
 # Aantal individuen na 5 en 10 jaar  (max is 5000!!)
-
-
 df_num %>%
   filter(time %in% c(24, 60, 120)) %>%
   group_by(time, Hs, sim) %>%
@@ -354,4 +348,19 @@ df_age %>%
   summarise(max_age = max(age), .groups = "drop_last") %>%
   summarise(max_age = mean(max_age)) %>%
   mutate(age_y = round(max_age / 12, 0))
+
+
+# Beginnen we met de stable stage zonder jacht of stable stage met jacht?
+#
+# Een afschot van een bepaald jaar -> hoe hetzelfde afschot verdelen in het jaar
+# ttz een jachtseizoen introduceren.
+#
+# Heeft het zin om alle afschot voor de geboortepiek te concentreren?
+#
+# zomerafschot is om schade te vermijden, minder om de populatie te reguleren
+# ? wat is de impact van het zomerafschot op
+
+# Waar je controle over hebt (qua jacht) is de verdeling van de aantallen over het jaar
+# en tussen de leeftijdsklassen
+
 

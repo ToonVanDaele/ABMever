@@ -238,12 +238,14 @@ get_agedistr <- function(mytb){
 # Calculate lambda based on the output of the 'get_numboar' function
 
 
-calc_lambda <- function(df_num){
+calc_lambda <- function(df_num, burnin = 0){
 
   df <- df_num %>%
+    filter(time > burnin) %>%
     group_by(sim, Hs, time) %>%
     summarise(ntot = sum(n), .groups = "drop_last") %>%
     mutate(lambda = ntot / lag(ntot, 1)) %>%
+    # Calculate geometric mean
     summarise(gm_lambda_m = exp(mean(log(lambda), na.rm = TRUE)), .groups = "drop") %>%
     mutate(gm_lambda_y = (gm_lambda_m ^ 12 ))
   return(df)
