@@ -5,7 +5,6 @@
 #----------------------------------------------------------------------
 # A ABM run
 #
-#
 sim_boar <- function(max_year = max_year, init_pop = init_pop,
                      Sm = Sm, Fm = Fm, Hm = Hm, hunt_abs = FALSE){
 
@@ -41,8 +40,8 @@ sim_boar <- function(max_year = max_year, init_pop = init_pop,
     }
   }
 
-  if (!NLany(boar)) warning("sim aborted early: reached 0 boar")
-  if (!NLany(boar)) warning("sim aborted early: reached max boar (5000)")
+  if (!NLany(boar)) warning("aborted early: reached 0 boar")
+  if (!(NLcount(boar) < 5000)) warning("aborted early: reached max boar (5000)")
 
   # Process tracking data
   # Number of individuals
@@ -56,8 +55,12 @@ sim_boar <- function(max_year = max_year, init_pop = init_pop,
   trackhunt <<- NULL
 
   # store population at the end of the simulation
-  age_distr <- boar@.Data %>%
-    as.data.frame()
+  df_pop <- boar@.Data %>%
+    as.data.frame() %>%
+    mutate(sex = boar@levels$sex[sex],
+           breed = boar@levels$breed[breed]) %>%
+    mutate(sex = as.factor(sex),
+           breed = as.factor(breed))
 
   return(list(df_numboar = df_numboar, df_harvest = df_harvest,
               df_pop = df_pop))

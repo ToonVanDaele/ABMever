@@ -219,16 +219,16 @@ get_harvest <- function(mytb){
 #-------------------------------------------------------------
 # process output - get age distribution
 
-get_agedistr <- function(mytb){
+get_pop <- function(mytb){
 
-  df_age <- mytb$result %>%
-    map_dfr("age_distr", .id = "rowname") %>%
+  df_pop <- mytb$result %>%
+    map_dfr("df_pop", .id = "rowname") %>%
     left_join(mytb %>%
                 dplyr::select(Hs, sim) %>%
                 rownames_to_column(),
               by = "rowname") %>%
     as_tibble()
-  return(df_age)
+  return(df_pop)
 }
 
 
