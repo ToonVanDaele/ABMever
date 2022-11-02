@@ -134,6 +134,9 @@ abm_init_m <- function(init_pop){
                      tVal = init_pop$age)
   boar <- turtlesOwn(turtles = boar,
                      tVar = "newb",
+                     tVal = 99)
+  boar <- turtlesOwn(turtles = boar,
+                     tVar = "offspring",
                      tVal = 0)
 
   init_age_cl <- init_pop$age %>%
@@ -170,10 +173,9 @@ mortality <- function(turtles, S) {
 #-------------------------------------------------------------------
 # hunting (independent of time base)
 #
-# @param turtles
-# @param H vector with hunting probabilities for each age class
-#
-# Make sure the hunting probability is correct for the given time base
+# turtles
+# H vector with hunting probabilities of absolute number for each age class
+# hunt_abs = TRUE for absolute numbers, FALSE for probabilities
 #
 hunt <- function(turtles, H, time, hunt_abs = FALSE) {
   # Select wildboars only (newborns are not hunted -> analoog aan matrix model)
@@ -189,6 +191,7 @@ hunt <- function(turtles, H, time, hunt_abs = FALSE) {
     tdie <- rbinom(n = NLcount(t2), size = 1, prob = H[age_t2 + s + a])
     who_dies <- who_t2[tdie == 1]    # ID's of hunted turtles
   }else{    # hunting absolute numbers
+    # Get the population with specified age class and sex
     jF <- who_t2[age_t2 == 0 & sex_t2 == "F"]
     jM <- who_t2[age_t2 == 0 & sex_t2 == "M"]
     yF <- who_t2[age_t2 == 1 & sex_t2 == "F"]
@@ -197,6 +200,8 @@ hunt <- function(turtles, H, time, hunt_abs = FALSE) {
     a3M <-who_t2[age_t2 == 2 & sex_t2 == "M"]
     a5F <-who_t2[age_t2 == 2 & sex_t2 == "F"]
     a5M <-who_t2[age_t2 == 2 & sex_t2 == "M"]
+
+    # sample the required number or remove all (if H > population)
     who_dies <- c(sample(jF, size = min(H["juvenileF"], length(jF))),
                   sample(jM, size = min(H["juvenileM"], length(jM))),
                   sample(yF, size = min(H["yearlingF"], length(yF))),
@@ -209,7 +214,7 @@ hunt <- function(turtles, H, time, hunt_abs = FALSE) {
 
   # track hunted individuals
   harvest <- NLwith(agents = turtles, var = "who", val = who_dies)
-  trackhunt[[time]] <<- get_boar(harvest)
+  trackhunt[[time]] <<- get_boar_harvest(turtles = harvest)
 
   turtles <- die(turtles = turtles, who = who_dies) # remove from list
   return(turtles)
@@ -234,8 +239,11 @@ reproduce <- function(turtles = boar, F) {
   if (nrow(who) > 0) {
     n <- rpois(n = nrow(who), lambda = F[who[, "agecl"] + 1])
     # Months since new juveniles = 0 -> used to track turtles with dependent juveniles
-    whohasnewborn <- NLwith(agents = turtles, var = "who", val = who[n > 0, "who"])
-    NLset(turtles = turtles, agents = whohasnewborn, var = "newb", val = 0)
+    # whohasnewborn <- NLwith(agents = turtles, var = "who", val = who[n > 0, "who"])
+    # NLset(turtles = turtles, agents = whohasnewborn, var = "newb", val = 0)
+    # NLset(turtles = turtles, agents = whohasnewborn, var = "offspring", val = n[n>0])
+    turtles@.Data[turtles@.Data[,"who"] %in% who[n > 0, "who"],"newb"] <- 0
+    turtles@.Data[turtles@.Data[,"who"] %in% who[n > 0, "who"],"offspring"] <- n[n > 0]
 
     # Hatch (add offspring to the population)
     turtles <- hatch(turtles = turtles, who = who[,"who"], n = n,

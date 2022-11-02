@@ -99,13 +99,12 @@ set_init_pop2 <- function(init_agecl){
 }
 
 #----------------------------------------------------------------
-# Get summary of boar (population by age clas, sex)
+# Get summary of boar (population by age class, sex)
 
 get_boar <- function(turtles){
 
   df <- turtles@.Data %>%
     as.data.frame() %>%
-    #mutate(agecl = ifelse(agecl == -1, 0, agecl)) %>% # aanpassen newborns = juvenile !!!!
     filter(agecl >= 0) %>%
     group_by(sex, agecl) %>%
     summarise(n = n(), .groups = "drop") %>%
@@ -113,6 +112,24 @@ get_boar <- function(turtles){
            agecl = ageclasses[agecl + 1])
   return(df)
 }
+
+#----------------------------------------------------------------
+# Get summary of boar (population by age class, sex)
+
+get_boar_harvest <- function(turtles){
+
+  df <- turtles@.Data %>%
+    as.data.frame() %>%
+    filter(agecl >= 0) %>%      # change to age >=0
+    mutate(dj = ifelse(newb < 5, offspring, 0)) %>%
+    group_by(sex, agecl) %>%
+    summarise(n = n(),
+              dep_juv = sum(dj), .groups = "drop") %>%
+    mutate(sex = turtles@levels$sex[sex],
+           agecl = ageclasses[agecl + 1])
+  return(df)
+}
+
 
 
 #-------------------------------------------------------------
