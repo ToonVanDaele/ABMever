@@ -173,7 +173,7 @@ df_num <- get_numboar(scen_int)
 #----------------------------------------------------
 # Figuur 6.3.1. Niet selectieve jacht
 df_num %>%
-  calc_lambda(burnin = 24) %>%
+  calc_lambda() %>%
   group_by(Hs) %>%
   summarise(mean = mean(gm_lambda_y),
             p90 = quantile(gm_lambda_y, prob = 0.9),
@@ -250,6 +250,11 @@ nboar0 <- 1000    # initial population size
 max_year <- 10    # number of years to simulate
 nsim <- 5         # number of simulations per scenario
 
+# Set initial age distribution
+init_agecl <- stable.stage(mat$mat) * nboar0
+init_pop <- set_init_pop(init_agecl = init_agecl,
+                         birth_month = birth_month, Sm = Sm)
+
 # run simulation and store results
 scen_ch7 <- sim_scen_boar(init_pop = init_pop,
                           max_year = max_year,
@@ -306,9 +311,9 @@ df_num %>%
     geom_errorbar(aes(ymax = p90, ymin = p10), width = 0.5, position = position_dodge(.9))
 
 # Maximum age after 10 years
-df_age <- get_agedistr(scen_ch7)
+df_pop <- get_pop(scen_ch7)
 
-df_age %>%
+df_pop %>%
   mutate(age_y = round(age / 12, 0)) %>%
   group_by(Hs, age_y, sim) %>%
   summarise(n = n(), .groups = "drop_last") %>%
@@ -318,7 +323,7 @@ df_age %>%
   scale_x_continuous(limits = c(0, 15))
 
 # max age
-df_age %>%
+df_pop %>%
   group_by(Hs, sim) %>%
   summarise(max_age = max(age), .groups = "drop_last") %>%
   summarise(max_age = mean(max_age)) %>%

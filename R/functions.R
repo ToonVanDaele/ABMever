@@ -175,7 +175,7 @@ get_hunting_scen <- function(path){
 checktime <- function(init_pop, max_year, Sm, Fm, Hs, nsim){
 
   koffie <- system.time({ sim_boar(init_pop = init_pop,
-                                   max_year = max_year,
+                                   max_month = max_year * 12 + 1,
                                    Sm = Sm,
                                    Fm = Fm,
                                    Hm = Hs[[1]]) })

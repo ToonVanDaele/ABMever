@@ -1,29 +1,37 @@
 # ABM functions
 #
-# uses Netlogo (NetlogoR)
+# requires NetlogoR
 #
 #----------------------------------------------------------------------
-# A ABM run
+# Run a single ABM simulation
 #
-sim_boar <- function(max_year = max_year, init_pop = init_pop,
+# - time step is months
+# - three age classes (juvenile, yearling, adult)
+#
+# max_year number of years to simulate
+# init_pop data with initial population (age, sex)
+# Sm monthly survival for each age class
+# Fm monthly fertility
+# Hm monthly hunting ratio or absolute hunting
+# hunt_abs TRUE hunting Hm is in absolute numbers, FALSE hunting is ratio
+#
+sim_boar <- function(max_month = max_month, init_pop = init_pop,
                      Sm = Sm, Fm = Fm, Hm = Hm, hunt_abs = FALSE){
+
+  require(NetLogoR)
 
   # initialisation
   boar <- abm_init_m(init_pop = init_pop)
   tracknum <- NULL
   trackhunt <<- NULL
-  max_month <- max_year * 12 + 1
 
   time <- 1
-  year <- 1
-  month <- 1   # In welke maand starten?
+  month <- 1   # Always start 1ste of January?
 
   while (NLany(boar) & NLcount(boar) < 5000 & time <= max_month) {
-    #  print(paste(year, month))
 
-    # track number of individuals in each age class
-    d <- get_boar(boar)
-    tracknum[[time]] <- d
+    d <- get_boar(boar)   # get number of individuals in each age class
+    tracknum[[time]] <- d # store in a list
 
     # events
     boar <- hunt(turtles = boar, H = Hm[month,], time, hunt_abs = hunt_abs)
@@ -34,10 +42,7 @@ sim_boar <- function(max_year = max_year, init_pop = init_pop,
     # time
     time <- time + 1
     month <- month + 1
-    if (month > 12) {
-      month <- 1
-      year <- year + 1
-    }
+    if (month > 12) month <- 1
   }
 
   if (!NLany(boar)) warning("aborted early: reached 0 boar")
@@ -98,7 +103,7 @@ sim_scen_boar <- function(init_pop = init_pop,
   for (i in 1:nrow(df)) {
 
   outsim <- sim_boar(init_pop = init_pop,
-                     max_year = max_year,
+                     max_month = max_year * 12 + 1,
                      Sm = Sm,
                      Fm = Fm,
                      Hm = Hs[[df$Hs[i]]],
