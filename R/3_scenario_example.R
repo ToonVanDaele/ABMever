@@ -39,7 +39,7 @@ nboar0 <- 500    # initial population size
 max_year <- 5    # number of years to simulate
 nsim <- 4        # number of simulations per scenario
 
-# Set initial age distribution
+# Set initial population with age distribution
 init_pop <- set_init_pop(init_agecl = c(150, 150, 200),
                          birth_month = birth_month, Sm = Sm)
 
@@ -111,11 +111,17 @@ df_har %>%
   ggplot(aes(x = time, y = n, color = agecl, linetype = Hs)) +
   geom_line()
 
+# Number of dependent juveniles by scenario
+df_har %>%
+  mutate(year = floor(time / 12) + 1) %>%
+  group_by(Hs, year, sim) %>%
+  summarise(dep_juv = sum(dep_juv)) %>%
+  summarise(m_dep_juv = mean(dep_juv)) %>%
+  ggplot(aes(x = year, y = m_dep_juv, colour = Hs)) + geom_line()
 
 
 #----------------------------------------------------
 # Scenario example absolute numbers
-
 
 # Load hunting scenarios with absolute numbers
 Hscen_abs <- get_hunting_scen(path = "./data/input/hunting_scenarios_abs.xlsx")
@@ -138,36 +144,12 @@ saveRDS(scen_abs, file = "./data/interim/scen_abs.RDS")
 #-----------------------------------------------------
 # process results
 #
-# Alle output (list) wordt bewaard in een tibble.
-# Met rbind_rows voegen we resultaten van vorige simulaties toe.
-scenN <- readRDS(file = "./data/interim/scen_N.RDS") #scenario no hunting
-
-scen <- scen_abs %>%
-  bind_rows(scenN)
-scen
-
 df_num <- get_numboar(scen_abs)
 
+# Total for a specific time, sim and scenario
 df_num %>%
   filter(time == 24 & sim == 1 & Hs == "abs1") %>%
   summarise(n = sum(n))
-
-
-df_har <- get_harvest(scen_abs)
-
-unique(df_har$Hs)
-
-df_har %>%
-  filter(time > 23 & time < 36 & Hs == "abs1" & sim == 1 & agecl == "juvenile")
-
-
-v <- df_har %>%
-  filter(time > 23 & time < 36 & Hs == "abs1" & sim == 1) %>%
-  group_by(agecl) %>%
-  summarise(n = sum(n)) %>%
-  pull(n)
-
-(v / 2514 ) * 1000
 
 
 #----------------------------------------------------
