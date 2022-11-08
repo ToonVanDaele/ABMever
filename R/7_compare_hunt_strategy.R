@@ -30,7 +30,7 @@ Hscen <- get_hunting_scen(path = "./data/input/hunting_scenarios.xlsx")
 names(Hscen)
 
 # We select "H0"
-H0 <- Hscen[c("H0")]  # Select 3 different hunting scenarios
+H0 <- Hscen[c("H0")]  # Select hunting scenario H0
 
 # We run an initial 4 year ABM simulation to reach stable stage distribution
 

@@ -81,6 +81,8 @@ saveRDS(scen_comp, file = "./data/interim/scen_comp.RDS")
 #-----------------------------------------------------
 # process results
 #
+readRDS
+
 df_num <- get_numboar(scen_comp)
 
 #----------------------------------------------------
