@@ -20,28 +20,31 @@ Sm <- S^(1/12)             # monthly survival probability
 # Fertility
 e <- c(4.21, 5.44, 6.12)    # average number of embryos  (tabel 3)
 r <- c(0.5, 0.9, 0.95)      # proportion females reproducing    (tabel 3)
-F <- r * e
+F <- r * e                  # Fertility (yearly)
+# load percentage births by month
 birth_month <- get_birth_month(csv_filename = "./data/input/birth_month.csv")
-Fm <- set_F(F = F, birth_month = birth_month) # Fertility by Month
+# Caclulate monthly fertility
+Fm <- set_F(F = F, birth_month = birth_month)
 
 # Hunting
 # Load hunting scenario's from excel sheet
 Hscen <- get_hunting_scen(path = "./data/input/hunting_scenarios.xlsx")
 names(Hscen)
 
-# We select "H0"
+# Select "H0"
 H0 <- Hscen[c("H0")]  # Select hunting scenario H0
 
-# We run an initial 4 year ABM simulation to reach stable stage distribution
+# Run an ABM simulation for 4 years, required to find stable stage distribution
 
-# Create projection matrix (for stable stage as initial guess)
+# Create projection matrix without hunting (for stable stage as initial guess)
 mat <- set_projmat_post(S = S, F = F, H = c(0, 0, 0))
-init_agecl <- stable.stage(mat$mat) * nboar0
+init_agecl <- stable.stage(mat$mat) * nboar0     # Stable stage distribution
+# Initial population (age, sex)
 init_pop <- set_init_pop(init_agecl = init_agecl,
                          birth_month = birth_month, Sm = Sm)
 
 # run simulation and store results
-scen_h1 <- sim_scen_boar(init_pop = init_pop,
+scen_7a <- sim_scen_boar(init_pop = init_pop,
                          max_year = 4,
                          nsim = 5,
                          Sm = Sm,
@@ -51,7 +54,9 @@ scen_h1 <- sim_scen_boar(init_pop = init_pop,
 saveRDS(scen_7a, file = "./data/interim/scen_7a.RDS")
 #scen_7a <- readRDS(file = "./data/interim/scen_7a.RDS")
 
-# Get the end population and sample 1000 individuals as initial popultation
+# Get the end population of the ABM simulation
+# and sample 1000 individuals as initial population
+# Sample is taken from all 5 repeated simulations
 
 df_pop <- get_pop(scen_7a)
 
@@ -59,7 +64,7 @@ df_init_pop <- df_pop %>%
   sample_n(size = 1000, replace = TRUE) %>%
   dplyr::select(age, sex)
 
-# We now run simulations with new hunting strategies included
+# We now run simulations with new hunting strategies
 Hnew <- Hscen[c("H0", "H1", "H2", "H3")]
 
 scen_7b <- sim_scen_boar(init_pop = df_init_pop,
@@ -67,7 +72,8 @@ scen_7b <- sim_scen_boar(init_pop = df_init_pop,
                          nsim = 5,
                          Sm = Sm,
                          Fm = Fm,
-                         Hs = Hnew, dochecktime = TRUE)
+                         Hs = Hnew,
+                         dochecktime = TRUE)
 
 saveRDS(scen_7b, file = "./data/interim/scen_7b.RDS")
 #scen_7b <- readRDS(file = "./data/interim/scen_7b.RDS")
@@ -107,6 +113,7 @@ df_har %>%
   ggplot(aes(x = paste(agecl, Hs), y = mean)) + geom_point() +
   geom_errorbar(aes(ymax = p90, ymin = p10), size = 0.5, stat = "identity")
 
+# Harvest during the first 5 years
 df_har %>%
   filter(time < 61) %>%
   mutate(year = floor((time - 1) / 12) + 1) %>%

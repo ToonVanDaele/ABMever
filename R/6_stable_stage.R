@@ -89,7 +89,7 @@ df_num %>%
             p90 = quantile(rel_n, prob = 0.9),
             p10 = quantile(rel_n, prob = 0.1), .groups = "drop") %>%
   ggplot(aes(x = time, y = mean_rel_n, colour = agecl, shape = Hs)) + geom_line() +
-  geom_point() + geom_errorbar(aes(ymax = p90, ymin = p10))
+  geom_point() + geom_errorbar(aes(ymax = p90, ymin = p10), width = 0.8)
 
 # After 4 years the age distribution seems to stabilize. We run the model again
 # for 4 years (till January 1st) for hunting scenario H0 and use the end

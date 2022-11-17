@@ -1,6 +1,6 @@
 # ABM functions
 #
-# requires NetlogoR
+# require NetlogoR
 #
 #----------------------------------------------------------------------
 # Run a single ABM simulation
@@ -8,12 +8,12 @@
 # - time step is months
 # - three age classes (juvenile, yearling, adult)
 #
-# max_year number of years to simulate
-# init_pop data with initial population (age, sex)
-# Sm monthly survival for each age class
-# Fm monthly fertility
-# Hm monthly hunting ratio or absolute hunting
-# hunt_abs TRUE hunting Hm is in absolute numbers, FALSE hunting is ratio
+# @param max_month number of months to simulate
+# @param init_pop vector with initial population 2 columns: age (months) & sex
+# @param Sm monthly survival for each age class (vector)
+# @param Fm monthly fertility for each age class (vector)
+# @param Hm monthly hunting ratio or absolute hunting for each age class & sex (matrix)
+# @param hunt_abs hunting Hm in absolute numbers (default FALSE)
 #
 sim_boar <- function(max_month = max_month, init_pop = init_pop,
                      Sm = Sm, Fm = Fm, Hm = Hm, hunt_abs = FALSE){
@@ -59,7 +59,7 @@ sim_boar <- function(max_month = max_month, init_pop = init_pop,
     mutate(time = as.integer(time))
   trackhunt <<- NULL
 
-  # store population at the end of the simulation
+  # store the whole population after the final simulation time step
   df_pop <- boar@.Data %>%
     as.data.frame() %>%
     mutate(sex = boar@levels$sex[sex],
