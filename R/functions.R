@@ -20,12 +20,11 @@ set_init_pop <- function(init_agecl, birth_month, Sm){
 
   # !!For now, this function is only for models that start at 1st of January!!
 
-  # init_agecl = initial distribution in each age class (vector of lenght 3)
-  # birth_month = relatieve distribution of births during the year (vector of length 12)
-  # Sm = monthly survival for each age class (vector of length 3)
+  # @param init_agecl initial distribution in each age class (vector of lenght 3)
+  # @param birth_month = relative distribution of births during the year (vector of length 12)
+  # @param Sm = monthly survival for each age class (vector of length 3)
   #
-  # returns a dataframe with two columns: age, sex
-  # one record for each individual
+  # @return dataframe with 2 columns: age, sex. length = number of individuals
   #
   df <- birth_month %>%
 
@@ -100,7 +99,11 @@ set_init_pop2 <- function(init_agecl){
 
 #----------------------------------------------------------------
 # Get summary of boar (population by age class, sex)
-
+#
+# @param turtles
+#
+# @return data frame with number of turtles (n) by sex & age class
+#
 get_boar <- function(turtles){
 
   df <- turtles@.Data %>%
@@ -114,8 +117,12 @@ get_boar <- function(turtles){
 }
 
 #----------------------------------------------------------------
-# Get summary of boar (population by age class, sex)
-
+# Get summary of harvested boar (population by age class, sex)
+#
+# @param turtles
+#
+# @return data frame with number of turtles (n) by sex & age class
+#
 get_boar_harvest <- function(turtles){
 
   df <- turtles@.Data %>%
@@ -130,13 +137,17 @@ get_boar_harvest <- function(turtles){
   return(df)
 }
 
-
-
 #-------------------------------------------------------------
 # Set Fertility
 #
 # Yearly fertility is distributed over months according
 # monthly birth rates.
+#
+# @param F yearly fertility by age class (vector length 3)
+# @param birth_month ratio of births by month (vector length 12)
+#
+# @return matrix monthly fertility by class (columns) and month(rows)
+#
 set_F <- function(F = F, birth_month){
 
   Fm <- matrix(data = c(rep(birth_month$perc / 100, 3)),
@@ -149,7 +160,13 @@ set_F <- function(F = F, birth_month){
 
 #----------------------------------------------------------------------
 # Get geboortepiek
-
+#
+# Load geboortepiek as csv
+#
+# @param csv_filename (string)
+#
+# @return data frame with percentage of births by month (12 rows)
+#
 get_birth_month <- function(csv_filename){
 
 #  filename <- "https://raw.githubusercontent.com/inbo/fis-projecten/305-rerun-geboortepiek/Grofwild/Populatiemodel-Everzwijn/Output/Geboortepiek/bp_results_1month.csv?token=GHSAT0AAAAAABYGSVSY725WYIFIZ4K4DKM6YZ23W6Q"
@@ -170,7 +187,11 @@ get_birth_month <- function(csv_filename){
 #-----------------------------------------------------------------------
 
 # Get hunting scenario's
-
+#
+# @param path filename of excelsheet
+#
+# @return list with matrices for each hunting scenario
+#
 get_hunting_scen <- function(path){
 
   f <- function(path, sheet){
@@ -201,7 +222,11 @@ checktime <- function(init_pop, max_year, Sm, Fm, Hs, nsim){
 
 #-------------------------------------------------------------
 # process output - get df_numboar
-
+#
+# @param mytb simulation output from scen_sim_boar function (tibble)
+#
+# @return data frame with number of boars by age class, sex, hunting scenario and simulation
+#
 get_numboar <- function(mytb){
 
   df_num <- mytb$result %>%
@@ -218,6 +243,11 @@ get_numboar <- function(mytb){
 
 #-------------------------------------------------------------
 # process output - get df_harvest
+#
+# @param mytb simulation output from scen_sim_boar function (tibble)
+#
+# @return data frame with number of harvest boars by age class, sex, hunting scenario and simulation
+#
 
 get_harvest <- function(mytb){
 
@@ -235,6 +265,11 @@ get_harvest <- function(mytb){
 
 #-------------------------------------------------------------
 # process output - get age distribution
+#
+# @param mytb simulation output from scen_sim_boar function (tibble)
+#
+# @return data frame with end population of each simulation
+#
 
 get_pop <- function(mytb){
 
@@ -253,7 +288,10 @@ get_pop <- function(mytb){
 
 #---------------------------------------------------------
 # Calculate lambda based on the output of the 'get_numboar' function
-
+#
+# @param df_num output from the get_numboar function (data frame)
+#
+# @return lambda (yearly) for each simulation, hunting scenario and time step
 
 calc_lambda <- function(df_num, burnin = 0){
 
@@ -267,6 +305,4 @@ calc_lambda <- function(df_num, burnin = 0){
     mutate(gm_lambda_y = (gm_lambda_m ^ 12 ))
   return(df)
 }
-
-
 

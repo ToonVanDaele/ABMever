@@ -8,14 +8,14 @@
 # - time step is months
 # - three age classes (juvenile, yearling, adult)
 #
-# @param max_month number of months to simulate
 # @param init_pop vector with initial population 2 columns: age (months) & sex
+# @param max_month number of months to simulate
 # @param Sm monthly survival for each age class (vector)
 # @param Fm monthly fertility for each age class (vector)
 # @param Hm monthly hunting ratio or absolute hunting for each age class & sex (matrix)
 # @param hunt_abs hunting Hm in absolute numbers (default FALSE)
 #
-sim_boar <- function(max_month = max_month, init_pop = init_pop,
+sim_boar <- function( init_pop = init_pop, max_month = max_month,
                      Sm = Sm, Fm = Fm, Hm = Hm, hunt_abs = FALSE){
 
   require(NetLogoR)
@@ -26,7 +26,7 @@ sim_boar <- function(max_month = max_month, init_pop = init_pop,
   trackhunt <<- NULL
 
   time <- 1
-  month <- 1   # Always start 1ste of January?
+  month <- 1
 
   while (NLany(boar) & NLcount(boar) < 5000 & time <= max_month) {
 
@@ -74,13 +74,21 @@ sim_boar <- function(max_month = max_month, init_pop = init_pop,
 
 #---------------------------------------------------------
 # run simulation for 1 or more scenarios
-
+#
+# @param max_month number of months to simulate
+# @param init_pop vector with initial population 2 columns: age (months) & sex
+# @param Sm monthly survival for each age class (vector)
+# @param Fm monthly fertility for each age class (vector)
+# @param Hs monthly hunting scenarios (list)
+# @param hunt_abs hunting in absolute numbers (TRUE) or ratios (FALSE) (default)
+# @param dochecktime estimate cpu time (TRUE), default = FALSE
+#
 sim_scen_boar <- function(init_pop = init_pop,
                           max_year = max_year,
-                          nsim = nsim,
                           Sm = Sm,
                           Fm = Fm,
                           Hs = Hs,
+                          nsim = nsim,
                           hunt_abs = FALSE,
                           dochecktime = FALSE){
 
@@ -115,7 +123,13 @@ sim_scen_boar <- function(init_pop = init_pop,
 
 #--------------------------------------------------------------
 # Initialisation (time base = Month)
-
+#
+# Initialisation of a new NetLogo population
+#
+# @param init_pop initial population. matrix with 2 columns (age & sex)
+#
+# @return netlogo population with age, sex, newb and offspring
+#
 abm_init_m <- function(init_pop){
 
   # Create world (required, but not used)
@@ -157,7 +171,7 @@ abm_init_m <- function(init_pop){
 # @param turtles
 # @param S vector with survival per age class
 
-# Make sure survival is correct for the given time base
+# Make sure survival is correct for the given time step!
 
 mortality <- function(turtles, S) {
   # Select wildboars (newborns don't die -> analoog aan matrix model)
@@ -171,11 +185,14 @@ mortality <- function(turtles, S) {
 }
 
 #-------------------------------------------------------------------
-# hunting (independent of time base)
+# hunting (monthly time step)
 #
-# turtles
-# H vector with hunting probabilities of absolute number for each age class
-# hunt_abs = TRUE for absolute numbers, FALSE for probabilities
+# @param turtles netlogo population
+# @param H vector with hunting for each age class and sex (vector length 8)
+# @param time timestep of simulation. Needed to track the harvest
+# @param hunt_abs hunting in absolute numbers (TRUE), or probabilities (FALSE) (default)
+#
+# @return turtles population + extra element in global variabel trackhunt.
 #
 hunt <- function(turtles, H, time, hunt_abs = FALSE) {
   # Select wildboars only (newborns are not hunted -> analoog aan matrix model)
@@ -221,14 +238,16 @@ hunt <- function(turtles, H, time, hunt_abs = FALSE) {
 }
 
 #--------------------------------------------------------------------
-## reproduction (independent of time step)
+## reproduction
 #
-# @param turtles turtles object
-# @param F vector with reproduction for each class
-
 # Only turtles of age > 10 reproduce
 # Newborns have 50/50 sex ratio
 # Make sure reproduction values are correct for the given time base
+#
+# @param turtles turtles object
+# @param F vector with reproduction for each class
+#
+# @return turtles
 
 reproduce <- function(turtles = boar, F) {
   # Select female turtles of age > 10 months
@@ -264,7 +283,14 @@ reproduce <- function(turtles = boar, F) {
 
 
 #--------------------------------------------------------------------
-## aging (time step = one month)
+# aging
+#
+# Increase age, change ageclass and breed type
+#
+# @param turtles
+#
+# @return turtles
+#
 aging_m <- function(turtles){
   # Newbborns become wildboars
   newborn <- NLwith(agents = turtles, var = "breed", val = "newborn")

@@ -1,4 +1,5 @@
 # Scenario's example - no hunting
+# Example
 
 library(tidyverse)
 library(NetLogoR)
@@ -17,11 +18,13 @@ Sm <- S^(1/12)        # monthly survival probability
 F <- c(0, 0.1, 0.5) # yearly fertility
 birth_month <- get_birth_month(csv_filename = "./data/input/birth_month.csv")
 Fm <- set_F(F = F, birth_month = birth_month) # by month
+colSums(Fm)
 
 # Hunting (by month)
 # Load all hunting scenario's from excel sheets
 Hscen <- get_hunting_scen(path = "./data/input/hunting_scenarios.xlsx")
 
+Hscen
 # We only use scenario "N" - no hunting
 Hs <- Hscen[c("N")]
 
@@ -33,9 +36,10 @@ max_year <- 5    # number of years to simulate
 nsim <- 4        # number of simulations per scenario
 
 # Set initial age distribution  (nog aan te passen!!)
-init_pop <- set_init_pop(init_agecl = c(200, 100, 500),
+init_pop <- set_init_pop(init_agecl = c(0.3, 0.2, 0.5) * nboar0,
                          birth_month = birth_month, Sm = Sm)
 
+max(init_pop$age)
 #-----------------------------------------------------
 # run full simulation
 scen_N <- sim_scen_boar(init_pop = init_pop,
@@ -46,6 +50,8 @@ scen_N <- sim_scen_boar(init_pop = init_pop,
                         Hs = Hs)
 # store output
 saveRDS(scen_N, file = "./data/interim/scen_N.RDS")
+
+scen_N$result[1]
 
 #-----------------------------------------------------
 # process results
