@@ -80,9 +80,7 @@ saveRDS(scen_7b, file = "./data/interim/scen_7b.RDS")
 df_num <- get_numboar(scen_7b)
 df_har <- get_harvest(scen_7b)
 
-view(df_har)
-
-df_har <- scen_7b$result[[1]]$df_harvest
+run1har <- scen_7b$result[[1]]$df_harvest
 
 # Population
 df_num %>%
@@ -137,6 +135,34 @@ df_har %>%
   summarise(mean_n = mean(n), .groups = "drop_last") %>%
   mutate(n = cumsum(mean_n)) %>%
   ggplot(aes(x = time, y = n, color = Hs)) + geom_line()
+
+
+# Dependent juveniles from hunted females in the first 2 years
+df_har %>%
+  filter(time < 25) %>%
+  group_by(Hs, sim) %>%
+  summarise(sum_dep_juv = sum(dep_juv), .groups = "drop_last") %>%
+  summarise(mean_dep_juv = mean(sum_dep_juv),
+            p90 = quantile(sum_dep_juv, prob = 0.9),
+            p10 = quantile(sum_dep_juv, prob = 0.1), .groups = "drop_last") %>%
+  ggplot(aes(x = Hs, y = mean_dep_juv)) + geom_point() +
+  geom_errorbar(aes(ymin = p10, ymax = p90))
+
+
+# ratio of dependent juveniles and total hunting first 2 years
+df_har %>%
+  filter(time < 25) %>%
+  group_by(Hs, sim) %>%
+  summarise(sum_dep_juv = sum(dep_juv),
+            sum_n = sum(n), .groups = "drop_last") %>%
+  mutate(r_dep_juv = sum_dep_juv / sum_n) %>%
+  summarise(mean_r_dep_juv = mean(r_dep_juv),
+            p90 = quantile(r_dep_juv, prob = 0.9),
+            p10 = quantile(r_dep_juv, prob = 0.1), .groups = "drop_last") %>%
+  ggplot(aes(x = Hs, y = mean_r_dep_juv)) + geom_point() +
+  geom_errorbar(aes(ymin = p10, ymax = p90))
+
+
 
 
 ## # Beginnen we met de stable stage zonder jacht of stable stage met jacht?

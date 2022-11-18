@@ -23,7 +23,7 @@ sim_boar <- function(init_pop = init_pop, max_month = max_month,
   # initialisation
   boar <- abm_init_m(init_pop = init_pop)
   tracknum <- NULL
-  trackhunt <<- NULL
+  trackhunt <- NULL
 
   time <- 1
   month <- 1
@@ -31,12 +31,21 @@ sim_boar <- function(init_pop = init_pop, max_month = max_month,
   while (NLany(boar) & NLcount(boar) < 5000 & time <= max_month) {
 
     d <- get_boar(boar)   # get number of individuals in each age class
-    tracknum[[time]] <- d # store in a list
+    tracknum[[time]] <- d # track population
 
-    # events
-    boar <- hunt(turtles = boar, H = Hm[month,], time, hunt_abs = hunt_abs)
+    # hunting
+    who_dies <- hunt(turtles = boar, H = Hm[month,], hunt_abs = hunt_abs)
+    harvest <- NLwith(agents = boar, var = "who", val = who_dies)
+    trackhunt[[time]] <- get_boar_harvest(turtles = harvest) # track hunted
+    boar <- die(turtles = boar, who = who_dies) # remove hunted from population
+
+    # reproduction
     boar <- reproduce(turtles = boar, F = Fm[month,])
+
+    # natural mortality
     boar <- mortality(boar, Sm)
+
+    # aging
     boar <- aging_m(boar)
 
     # time
@@ -229,12 +238,13 @@ hunt <- function(turtles, H, time, hunt_abs = FALSE) {
                   sample(a5M, size = min(H["adult5M"], length(a5M))))
   }
 
+  return(who_dies)
   # track hunted individuals
-  harvest <- NLwith(agents = turtles, var = "who", val = who_dies)
-  trackhunt[[time]] <<- get_boar_harvest(turtles = harvest)
-
-  turtles <- die(turtles = turtles, who = who_dies) # remove from list
-  return(turtles)
+  # harvest <- NLwith(agents = turtles, var = "who", val = who_dies)
+  # trackhunt[[time]] <<- get_boar_harvest(turtles = harvest)
+  #
+  # turtles <- die(turtles = turtles, who = who_dies) # remove from list
+  # return(turtles)
 }
 
 #--------------------------------------------------------------------
@@ -259,10 +269,8 @@ reproduce <- function(turtles = boar, F) {
   if (nrow(who) > 0) {
     n <- rpois(n = nrow(who), lambda = F[who[, "agecl"] + 1])
     who_repr <- who[n > 0, "who"]
-    # Months since new juveniles = 0 -> used to track turtles with dependent juveniles
 
-    # turtles@.Data[turtles@.Data[,"who"] %in% who[n > 0, "who"],"newb"] <- 0
-    # turtles@.Data[turtles@.Data[,"who"] %in% who[n > 0, "who"],"offspring"] <- n[n > 0]
+    # Months since newborns = 0 -> to track dependent turtles
 
     turtles[turtles$who %in% who_repr, "newb"] <- 0
     turtles[turtles$who %in% who_repr, "offspring"] <- n[n > 0]
@@ -287,8 +295,6 @@ reproduce <- function(turtles = boar, F) {
   return(turtles)
 }
 
-
-
 #--------------------------------------------------------------------
 # aging
 #
@@ -306,30 +312,11 @@ aging_m <- function(turtles){
   # All age + 1 (month)
   turtles@.Data[, "age"] <- turtles@.Data[, "age"] + 1
   # Set agecl
-  turtles@.Data[turtles@.Data[, "age"] <= 12, "agecl"] <- 0
-  turtles@.Data[turtles@.Data[, "age"] > 12, "agecl"] <- 1
-  turtles@.Data[turtles@.Data[, "age"] > 24, "agecl"] <- 2
+  turtles@.Data[turtles$age <= 12, "agecl"] <- 0
+  turtles@.Data[turtles$age > 12, "agecl"] <- 1
+  turtles@.Data[turtles$age > 24, "agecl"] <- 2
 
   # All months since new newborns + 1
   turtles@.Data[, "newb"] <- turtles@.Data[, "newb"] + 1
   return(turtles)
 }
-
-#----------------------------------------------------------------
-# initialisation (time base = year)
-
-abm_init_y <- function(init_pop){
-
-  # Create world (required, but not used)
-  world <- createWorld(minPxcor = -5, maxPxcor = 5, minPycor = -5, maxPycor = 5)
-
-  boar <- createTurtles(n = length(init_agecls), world = world,
-                        breed = "wildboar",
-                        color = rep("red", length(init_agecls)))
-  boar <- turtlesOwn(turtles = boar, tVar = "age",
-                     tVal = init_agecls)
-  boar <- turtlesOwn(turtles = boar, tVar = "agecl",
-                     tVal = init_agecls)
-}
-
-

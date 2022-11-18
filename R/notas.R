@@ -21,6 +21,4 @@
 
 # ??? fertility ook * overleving female op maandbasis? (analoog aan jaarlijks populatiemodel) ???
 
-# dependent juveniles moet voor males altijd 0 zijn. Waarom is dat niet het gevel in scen_7b?  -> probleem bij reproductie? niet uitsluitend females?
-
 
