@@ -270,7 +270,6 @@ get_harvest <- function(mytb){
 #
 # @return data frame with end population of each simulation
 #
-
 get_pop <- function(mytb){
 
   df_pop <- mytb$result %>%
@@ -282,9 +281,6 @@ get_pop <- function(mytb){
     as_tibble()
   return(df_pop)
 }
-
-
-
 
 #---------------------------------------------------------
 # Calculate lambda based on the output of the 'get_numboar' function

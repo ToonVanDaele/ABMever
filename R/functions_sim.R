@@ -15,7 +15,7 @@
 # @param Hm monthly hunting ratio or absolute hunting for each age class & sex (matrix)
 # @param hunt_abs hunting Hm in absolute numbers (default FALSE)
 #
-sim_boar <- function( init_pop = init_pop, max_month = max_month,
+sim_boar <- function(init_pop = init_pop, max_month = max_month,
                      Sm = Sm, Fm = Fm, Hm = Hm, hunt_abs = FALSE){
 
   require(NetLogoR)
@@ -252,31 +252,38 @@ hunt <- function(turtles, H, time, hunt_abs = FALSE) {
 reproduce <- function(turtles = boar, F) {
   # Select female turtles of age > 10 months
   # reproduction (n) according to F value of respective age class
-  who <- turtles@.Data[turtles@.Data[,"sex"] == 1 &
-                  turtles@.Data[,"age"] > 10, c("who", "agecl"), drop = FALSE]
+  who <- turtles[turtles$sex == "F" & turtles$age > 10,
+                 c("who", "agecl"), drop = FALSE]
 
+  # If any females of age > 10 in population
   if (nrow(who) > 0) {
     n <- rpois(n = nrow(who), lambda = F[who[, "agecl"] + 1])
+    who_repr <- who[n > 0, "who"]
     # Months since new juveniles = 0 -> used to track turtles with dependent juveniles
-    # whohasnewborn <- NLwith(agents = turtles, var = "who", val = who[n > 0, "who"])
-    # NLset(turtles = turtles, agents = whohasnewborn, var = "newb", val = 0)
-    # NLset(turtles = turtles, agents = whohasnewborn, var = "offspring", val = n[n>0])
-    turtles@.Data[turtles@.Data[,"who"] %in% who[n > 0, "who"],"newb"] <- 0
-    turtles@.Data[turtles@.Data[,"who"] %in% who[n > 0, "who"],"offspring"] <- n[n > 0]
+
+    # turtles@.Data[turtles@.Data[,"who"] %in% who[n > 0, "who"],"newb"] <- 0
+    # turtles@.Data[turtles@.Data[,"who"] %in% who[n > 0, "who"],"offspring"] <- n[n > 0]
+
+    turtles[turtles$who %in% who_repr, "newb"] <- 0
+    turtles[turtles$who %in% who_repr, "offspring"] <- n[n > 0]
 
     # Hatch (add offspring to the population)
-    turtles <- hatch(turtles = turtles, who = who[,"who"], n = n,
+    turtles <- hatch(turtles = turtles, who = who_repr, n = n[n > 0],
                    breed = "newborn")
   }
 
   # Set some variable values for the newborns
   newborn <- NLwith(agents = turtles, var = "breed", val = "newborn")
+  # sex 50/50 ratio
+  nb_sex <- sample(c("F", "M"), NLcount(newborn), replace = TRUE)
+
   turtles <- NLset(turtles = turtles, agents = newborn,
-                   var = c("age", "agecl", "sex"),
+                   var = c("age", "agecl", "sex", "offspring", "newb"),
                    val = data.frame(age = -1,
                                     agecl = -1,
-                                    sex = sample(c("F", "M"),
-                                                 NLcount(newborn), replace = TRUE)))
+                                    sex = nb_sex,
+                                    offspring = 0,
+                                    newb = 99))
   return(turtles)
 }
 

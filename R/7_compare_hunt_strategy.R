@@ -80,6 +80,10 @@ saveRDS(scen_7b, file = "./data/interim/scen_7b.RDS")
 df_num <- get_numboar(scen_7b)
 df_har <- get_harvest(scen_7b)
 
+view(df_har)
+
+df_har <- scen_7b$result[[1]]$df_harvest
+
 # Population
 df_num %>%
   group_by(time, Hs, sim) %>%
