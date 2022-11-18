@@ -71,6 +71,7 @@ sim_boar <- function(init_pop = init_pop, max_month = max_month,
   # store the whole population after the final simulation time step
   df_pop <- boar@.Data %>%
     as.data.frame() %>%
+    dplyr::select(who, breed, sex, age, newb, offspring) %>%
     mutate(sex = boar@levels$sex[sex],
            breed = boar@levels$breed[breed]) %>%
     mutate(sex = as.factor(sex),
