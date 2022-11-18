@@ -4,7 +4,7 @@
 #-----------------------------------------------
 # Set initial ages
 
-set_init_pop <- function(init_agecl, birth_month, Sm){
+set_init_pop <- function(init_agecl, birth_month, Sm, max_age = 180){
 
   # To reduce the burn-in time, the initial population should be close to the
   # stable stage population distribution. The distribution over the ageclasses
@@ -23,6 +23,7 @@ set_init_pop <- function(init_agecl, birth_month, Sm){
   # @param init_agecl initial distribution in each age class (vector of lenght 3)
   # @param birth_month = relative distribution of births during the year (vector of length 12)
   # @param Sm = monthly survival for each age class (vector of length 3)
+  # @param max_age = maximum age allowed (default = 180 months)
   #
   # @return dataframe with 2 columns: age, sex. length = number of individuals
   #
@@ -30,37 +31,45 @@ set_init_pop <- function(init_agecl, birth_month, Sm){
 
     # The age distribution of the juveniles and yearlings is according
     # the birth distribution and the respective survival till the end of the month
-    rownames_to_column(var = "m") %>%   # create column with number of the month
+    rownames_to_column(var = "m") %>%   # column with number of the month
     mutate(m = as.numeric(m)) %>%
-    mutate(perc_0s = perc * Sm[1] ^ (13 - m), # birth+survival juveniles till end of year
+    mutate(perc_0s = perc * Sm[1] ^ (13 - m), # birth+survival juv. till end of year
            perc_1s = perc * Sm[2] ^ (13 - m)) %>%   # idem for yearling
     mutate_at(vars(perc_0s, perc_1s), funs(./ sum(.))) %>% # total surviving juv & yearling
-    mutate(cl_0 = init_agecl[1] * perc_0s,         # initial population juveniles
-           cl_1 = init_agecl[2] * perc_1s) %>%     # initial population yearling
-    mutate(cl_0_F = round(cl_0 / 2, 0),            # initial population juveniles female
-           cl_1_F = round(cl_1 / 2, 0)) %>%        # initial population yearling female
-    mutate(cl_0_M = round(cl_0, 0) - cl_0_F,       # initial population juveniles male
-           cl_1_M = round(cl_1, 0) - cl_1_F)       # initial population yearling male
+    mutate(cl_0 = init_agecl[1] * perc_0s,       # init pop juveniles
+           cl_1 = init_agecl[2] * perc_1s) %>%   # init pop yearling
+    mutate(cl_0_F = round(cl_0 / 2, 0),          # init pop juveniles female
+           cl_1_F = round(cl_1 / 2, 0)) %>%      # init pop yearling female
+    mutate(cl_0_M = round(cl_0, 0) - cl_0_F,     # init pop juveniles male
+           cl_1_M = round(cl_1, 0) - cl_1_F)     # init pop yearling male
 
-  # We put everything in seperate data frames
+  # We put everything in separate data frames
   agecl_0_F <- data.frame(age = rep(1:12, df[,"cl_0_F"]), sex = "F")
   agecl_1_F <- data.frame(age = rep(1:12, df[,"cl_1_F"]) + 12, sex = "F")
   agecl_0_M <- data.frame(age = rep(1:12, df[,"cl_0_M"]), sex = "M")
   agecl_1_M <- data.frame(age = rep(1:12, df[,"cl_1_M"]) + 12, sex = "M")
 
-  # The inital age for the adults is set with a geometric distribution
+  # The initial age for the adults is set with a geometric distribution
   # which simulates the expected age distribution for adults (to be tuned!!)
   # The age distribution of adults has no impact on the population projection
-  sex_2_F <- round(init_agecl[3] / 2, 0)
-  sex_2_M <- round(init_agecl[3], 0) - sex_2_F
-  agecl_2_F <- data.frame(age = rgamma(n = sex_2_F, shape = 2, rate = 0.8) * 12 + 24,
-                          sex = "F")
-  agecl_2_M <- data.frame(age = rgamma(n = sex_2_M, shape = 2, rate = 0.8) * 12 + 24,
-                          sex = "M")
+  agecl_2_nb <- round(init_agecl[3], 0)
+
+  # Age from a geometric distribution - maxmimum is max_age
+  agecl_2_age <- rgamma(n = agecl_2_nb, shape = 2, rate = 0.8) * 12 + 24
+  # While values > max age exist -> choose new values from the distribution
+  while(length(agecl_2_age[agecl_2_age > max_age]) > 0) {
+    new_values <- rgamma(n = length(agecl_2_age[agecl_2_age > max_age]),
+                         shape = 2, rate = 0.8) * 12 + 24
+    agecl_2_age[agecl_2_age > max_age] <- new_values
+  }
+
+  agecl_2_sex <- c(rep("F", round(agecl_2_nb / 2, 0)),
+                   rep("M", agecl_2_nb - round(agecl_2_nb / 2, 0)))
+  agecl_2 <- data.frame(age = agecl_2_age,
+                        sex = agecl_2_sex)
 
   # rbind all data frames together
-  init_pop <- bind_rows(agecl_0_F, agecl_0_M, agecl_1_F, agecl_1_M,
-                        agecl_2_F, agecl_2_M)
+  init_pop <- bind_rows(agecl_0_F, agecl_0_M, agecl_1_F, agecl_1_M, agecl_2)
 
   return(init_pop)
 }
