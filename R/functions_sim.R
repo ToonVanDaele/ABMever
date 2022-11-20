@@ -15,8 +15,7 @@
 # @param Hm monthly hunting ratio or absolute hunting for each age class & sex (matrix)
 # @param hunt_abs hunting Hm in absolute numbers (default FALSE)
 #
-sim_boar <- function(init_pop = init_pop, max_month = max_month,
-                     Sm = Sm, Fm = Fm, Hm = Hm, hunt_abs = FALSE){
+sim_boar <- function(init_pop, max_month, Sm, Fm, Hm, hunt_abs = FALSE){
 
   require(NetLogoR)
 
@@ -93,12 +92,8 @@ sim_boar <- function(init_pop = init_pop, max_month = max_month,
 # @param hunt_abs hunting in absolute numbers (TRUE) or ratios (FALSE) (default)
 # @param dochecktime estimate cpu time (TRUE), default = FALSE
 #
-sim_scen_boar <- function(init_pop = init_pop,
-                          max_year = max_year,
-                          Sm = Sm,
-                          Fm = Fm,
-                          Hs = Hs,
-                          nsim = nsim,
+sim_scen_boar <- function(init_pop, max_year,
+                          Sm, Fm, Hs, nsim,
                           hunt_abs = FALSE,
                           dochecktime = FALSE){
 

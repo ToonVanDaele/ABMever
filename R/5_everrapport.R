@@ -3,7 +3,6 @@
 # Comparision of the ABM models with results of population matrix
 
 library(tidyverse)
-library(NetLogoR)
 library(popbio)
 source("R/functions.R")
 source("R/functions_sim.R")
@@ -57,8 +56,6 @@ Hscen <- get_hunting_scen(path = "./data/input/hunting_scenarios.xlsx")
 # Select scenario "N" (no hunting) (Hunting is already included in S)
 Hs <- Hscen[c("N")]
 
-nsim <- 5   # number of simulations (=repetitions)
-
 # Create initial population
 # According stable stage and births by month
 init_pop <- set_init_pop(init_agecl = init_agecl, birth_month = birth_month, Sm = Sm)
@@ -72,7 +69,7 @@ init_pop %>%
 # run ABM model
 scen_h4_3 <- sim_scen_boar(init_pop = init_pop,
                            max_year = max_year,
-                           nsim = nsim,
+                           nsim = 5,
                            Sm = Sm,
                            Fm = Fm,
                            Hs = Hs)
@@ -146,7 +143,6 @@ names(Hs) <- Hy  # give the elements in the list a name
 
 nboar0 <- 100    # initial population size
 max_year <- 5    # number of years to simulate
-nsim <- 4        # number of simulations per scenario
 
 # Create projection matrix (for stable stage as initial population)
 mat <- set_projmat_post(S = S, F = F, H = c(0, 0, 0))
@@ -159,7 +155,7 @@ init_pop <- set_init_pop(init_agecl = init_agecl,
 # run simulation and store results
 scen_int <- sim_scen_boar(init_pop = init_pop,
                           max_year = max_year,
-                          nsim = nsim,
+                          nsim = 4,
                           Sm = Sm,
                           Fm = Fm,
                           Hs = Hs,
@@ -210,7 +206,7 @@ names(Hsel) <- paste(df$agecl, df$Hy, sep = "_")  # give list elements a name
 # run simulation and store results
 scen_sel <- sim_scen_boar(init_pop = init_pop,
                           max_year = max_year,
-                          nsim = nsim,
+                          nsim = 4,
                           Sm = Sm,
                           Fm = Fm,
                           Hs = Hsel,
@@ -248,7 +244,6 @@ Hs <- Hscen[c("N", "H0", "H1", "H2", "H3", "H4", "H5", "H6")]
 # ABM related parameters
 nboar0 <- 1000    # initial population size
 max_year <- 10    # number of years to simulate
-nsim <- 5         # number of simulations per scenario
 
 # Set initial age distribution
 init_agecl <- stable.stage(mat$mat) * nboar0
@@ -258,7 +253,7 @@ init_pop <- set_init_pop(init_agecl = init_agecl,
 # run simulation and store results
 scen_ch7 <- sim_scen_boar(init_pop = init_pop,
                           max_year = max_year,
-                          nsim = nsim,
+                          nsim = 5,
                           Sm = Sm,
                           Fm = Fm,
                           Hs = Hs,
@@ -328,20 +323,5 @@ df_pop %>%
   summarise(max_age = max(age), .groups = "drop_last") %>%
   summarise(max_age = mean(max_age)) %>%
   mutate(age_y = round(max_age / 12, 0))
-
-
-# Beginnen we met de stable stage zonder jacht of stable stage met jacht?
-#
-# Een afschot van een bepaald jaar -> hoe hetzelfde afschot verdelen in het jaar
-# ttz een jachtseizoen introduceren.
-#
-# Heeft het zin om alle afschot voor de geboortepiek te concentreren?
-#
-# zomerafschot is om schade te vermijden, minder om de populatie te reguleren
-# ? wat is de impact van het zomerafschot op
-
-# Waar je controle over hebt (qua jacht) zijn de absolute aantallen,
-# de relatieve verdeling over het jaar en tussen de leeftijdsklassen.
-# Er is geen controle over de ratios afschot t.a.v. de werkelijke populatie.
 
 

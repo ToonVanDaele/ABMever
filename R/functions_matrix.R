@@ -11,7 +11,7 @@
 #
 # return list with two 3x3 projection matrices, with and without hunting
 #
-set_projmat_post <- function(S = S, F = F, H = H){
+set_projmat_post <- function(S, F, H){
 
   mat <- matrix(c(F[1]*S[1]*0.5, F[2]*S[2]*0.5,	F[3]*S[3]*0.5,
                   S[1],          0,  	          0,

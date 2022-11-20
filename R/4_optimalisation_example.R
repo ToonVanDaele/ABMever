@@ -6,7 +6,6 @@
 # Scenario's example
 
 library(tidyverse)
-library(NetLogoR)
 source("R/functions.R")
 source("R/functions_sim.R")
 source("R/functions_matrix.R")
@@ -51,10 +50,7 @@ names(Hs) <- Hy  # give the list a name
 
 # ----------------------------------------------------
 # ABM related parameters
-
 nboar0 <- 100    # initial population size
-max_year <- 5    # number of years to simulate
-nsim <- 4        # number of simulations per scenario
 
 # Create projection matrix (for stable stage as initial population)
 mat <- set_projmat_post(S = S, F = F, H = c(0, 0, 0))
@@ -67,8 +63,8 @@ init_pop <- set_init_pop(init_agecl = init_agecl,
 #-----------------------------------------------------
 # run full simulation and store results
 scen_int <- sim_scen_boar(init_pop = init_pop,
-                          max_year = max_year,
-                          nsim = nsim,
+                          max_year = 5,
+                          nsim = 4,
                           Sm = Sm,
                           Fm = Fm,
                           Hs = Hs,

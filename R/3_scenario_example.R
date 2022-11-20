@@ -1,7 +1,6 @@
 # Scenario's example
 
 library(tidyverse)
-library(NetLogoR)
 source("R/functions.R")
 source("R/functions_sim.R")
 
@@ -34,20 +33,17 @@ Hs <- Hscen[c("N", "T1", "T3")]
 
 # ----------------------------------------------------
 # ABM related parameters
-
 nboar0 <- 500    # initial population size
-max_year <- 5    # number of years to simulate
-nsim <- 4        # number of simulations per scenario
 
 # Set initial population with age distribution
-init_pop <- set_init_pop(init_agecl = c(150, 150, 200),
+init_pop <- set_init_pop(init_agecl = c(0.3, 0.3, 0.4) * nboar0,
                          birth_month = birth_month, Sm = Sm)
 
 #-----------------------------------------------------
 # run full simulation and store results
 scen1 <- sim_scen_boar(init_pop = init_pop,
-                       max_year = max_year,
-                       nsim = nsim,
+                       max_year = 5,
+                       nsim = 4,
                        Sm = Sm,
                        Fm = Fm,
                        Hs = Hs,
@@ -56,7 +52,7 @@ saveRDS(scen1, file = "./data/interim/scen1.RDS")
 #scen1 <- readRDS(file = "./data/interim/scen1.RDS")
 
 scen1
-head(scen1$result[[1]][[1]])
+head(scen1$result[[1]]$df_numboar)
 
 #-----------------------------------------------------
 # process results
@@ -71,11 +67,6 @@ scen
 
 df_num <- get_numboar(scen)
 df_har <- get_harvest(scen1)
-
-
-df_har %>%
-  filter(time > 23 & time < 36 & Hs == "T1" & sim == 1 & agecl == "Adult" & sex == "F")
-
 
 #----------------------------------------------------
 # plot
@@ -131,8 +122,8 @@ names(Hscen_abs)
 #-----------------------------------------------------
 # run full simulation and store results
 scen_abs <- sim_scen_boar(init_pop = init_pop,
-                       max_year = max_year,
-                       nsim = nsim,
+                       max_year = 5,
+                       nsim = 4,
                        Sm = Sm,
                        Fm = Fm,
                        Hs = Hscen_abs,

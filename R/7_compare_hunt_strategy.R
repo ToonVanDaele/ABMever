@@ -65,14 +65,12 @@ df_init_pop <- df_pop %>%
   dplyr::select(age, sex)
 
 # We now run simulations with new hunting strategies
-Hnew <- Hscen[c("H0", "H1", "H2", "H3")]
-
 scen_7b <- sim_scen_boar(init_pop = df_init_pop,
                          max_year = 10,
                          nsim = 5,
                          Sm = Sm,
                          Fm = Fm,
-                         Hs = Hnew,
+                         Hs = Hscen[c("H0", "H1", "H2", "H3")],
                          dochecktime = TRUE)
 
 saveRDS(scen_7b, file = "./data/interim/scen_7b.RDS")

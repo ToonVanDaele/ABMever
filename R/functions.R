@@ -157,7 +157,7 @@ get_boar_harvest <- function(turtles){
 #
 # @return matrix monthly fertility by class (columns) and month(rows)
 #
-set_F <- function(F = F, birth_month){
+set_F <- function(F, birth_month){
 
   Fm <- matrix(data = c(rep(birth_month$perc / 100, 3)),
                nrow = 12, ncol = 3,

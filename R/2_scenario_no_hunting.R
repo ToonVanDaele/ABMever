@@ -2,7 +2,6 @@
 # Example
 
 library(tidyverse)
-library(NetLogoR)
 source("R/functions.R")
 source("R/functions_sim.R")
 
@@ -31,27 +30,27 @@ Hs <- Hscen[c("N")]
 # ----------------------------------------------------
 # ABM related parameters
 
-nboar0 <- 1000    # initial population size
-max_year <- 5    # number of years to simulate
-nsim <- 4        # number of simulations per scenario
+nboar0 <- 500    # initial population size
 
 # Set initial age distribution  (nog aan te passen!!)
-init_pop <- set_init_pop(init_agecl = c(0.3, 0.2, 0.5) * nboar0,
+init_pop <- set_init_pop(init_agecl = c(0.3, 0.3, 0.4) * nboar0,
                          birth_month = birth_month, Sm = Sm)
 
-max(init_pop$age)
+max(init_pop$age) / 12   # Leeftijd oudste individu initiële populatie
 #-----------------------------------------------------
 # run full simulation
 scen_N <- sim_scen_boar(init_pop = init_pop,
-                        max_year = max_year,
-                        nsim = nsim,
+                        max_year = 5,
+                        nsim = 4,
                         Sm = Sm,
                         Fm = Fm,
                         Hs = Hs)
 # store output
 saveRDS(scen_N, file = "./data/interim/scen_N.RDS")
 
-scen_N$result[1]
+scen_N$result[[1]]$df_numboar
+scen_N$result[[1]]$df_harvest
+scen_N$result[[1]]$df_pop
 
 #-----------------------------------------------------
 # process results

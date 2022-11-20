@@ -4,7 +4,6 @@
 # similar population parameters
 
 library(tidyverse)
-library(NetLogoR)
 library(popbio)
 source("R/functions.R")
 source("R/functions_sim.R")
@@ -77,12 +76,11 @@ scen_comp <- sim_scen_boar(init_pop = init_pop,
 
 # store output
 saveRDS(scen_comp, file = "./data/interim/scen_comp.RDS")
+#scen_comp <- readRDS("./data/interim/scen_comp.RDS")
 
 #-----------------------------------------------------
 # process results
 #
-readRDS
-
 df_num <- get_numboar(scen_comp)
 
 #----------------------------------------------------
