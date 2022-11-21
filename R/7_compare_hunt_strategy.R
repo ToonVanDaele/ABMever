@@ -160,21 +160,3 @@ df_har %>%
   ggplot(aes(x = Hs, y = mean_r_dep_juv)) + geom_point() +
   geom_errorbar(aes(ymin = p10, ymax = p90))
 
-
-
-
-## # Beginnen we met de stable stage zonder jacht of stable stage met jacht?
-#
-# Een afschot van een bepaald jaar -> hoe hetzelfde afschot verdelen in het jaar
-# ttz een jachtseizoen introduceren.
-#
-# Heeft het zin om alle afschot voor de geboortepiek te concentreren?
-#
-# zomerafschot is om schade te vermijden, minder om de populatie te reguleren
-# ? wat is de impact van het zomerafschot op
-
-# Waar je controle over hebt (qua jacht) zijn de absolute aantallen,
-# de relatieve verdeling over het jaar en tussen de leeftijdsklassen.
-# Er is geen controle over de ratios afschot t.a.v. de werkelijke populatie.
-
-
