@@ -42,7 +42,7 @@ sim_boar <- function(init_pop, max_month, Sm, Fm, Hm, hunt_abs = FALSE){
     boar <- reproduce(turtles = boar, F = Fm[month,])
 
     # natural mortality
-    boar <- mortality(boar, Sm)
+    boar <- mortality(turtles = boar, S = Sm[month,])
 
     # aging
     boar <- aging_m(boar)
@@ -96,6 +96,13 @@ sim_scen_boar <- function(init_pop, max_year,
                           Sm, Fm, Hs, nsim,
                           hunt_abs = FALSE,
                           dochecktime = FALSE){
+
+  # Check if Sm is a vector -> make it a matrix
+  if (!is.matrix(Sm)) {
+    Smm <- matrix(data = Sm, nrow = 12, ncol = 6, byrow = TRUE)
+    colnames(Smm) <- c(paste0(ageclasses, "F"), paste0(ageclasses, "M"))
+    Sm <- Smm
+  }
 
   # Estimate runtime before full simulation
   if (dochecktime == TRUE & hunt_abs == FALSE) {
@@ -182,8 +189,11 @@ mortality <- function(turtles, S) {
   # Select wildboars (newborns don't die -> analoog aan matrix model)
   t2 <- NLwith(agents = turtles, var = "breed", val = "wildboar")
   who_t2 <- of(agents = t2, var = "who") # don't include newborns
-  age_t2 <- of(agents = t2, var = "agecl")
-  tdie <- rbinom(n = NLcount(t2), size = 1, prob = 1 - S[age_t2 + 1])
+  age_t2 <- of(agents = t2, var = "agecl") # get age class
+  sex_t2 <- of(agents = t2, var = "sex") # get sex
+  s <- ifelse(sex_t2 == "F", 1, 4)  # select female or male columns
+
+  tdie <- rbinom(n = NLcount(t2), size = 1, prob = 1 - S[age_t2 + s])
   who_dies <- who_t2[tdie == 1]    # ID's of dead turtles
   turtles <- die(turtles = turtles, who = who_dies) # remove from list
   return(turtles)

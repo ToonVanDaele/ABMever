@@ -1,25 +1,23 @@
 
-# voorlopig 3 leeftijdsklassen voor populatie behouden (niet naar 4x4)
-
-# 1 januari is ok als startdatum
-
-# verschil natuurlijke overleving tussen female en male invoegen
-
-# overleving per maand later verschillen toevoegen -> excelbestand
+# Nog te doen:
 
 # is numboar na of voor jacht in het opgegeven tijdstap?
-
-# reproduce -> mortality -> hunting -> (aging)
+# volgorde: reproduce -> mortality -> hunting -> (aging)
+# bekijken of er effect is
 
 # df_harvest -> volledige populatie informatie (boar - who dies) bijhouden.
-# + sim,scenario, tijdstap. pas later eventueel samenvatting.
-# -> waarom precies. Nu is tracknum en trackhunt analoog. Welke extra info
-# is nuttig?
+# + sim, scenario en tijdstap. Pas later samenvatting maken. waarom precies?
+# Nu is tracknum en trackhunt analoog. Welke extra info is nuttig?
 
-# ??? fertility ook * overleving female op maandbasis? (analoog aan jaarlijks populatiemodel) ???
+# Wordt bij fertility ook de overleving van female op maandbasis meegenomen?
+# = analoog aan jaarlijks populatiemodel?
 
 
 # Overige nota's
+
+# - voorlopig 3 leeftijdsklassen voor populatie behouden (niet naar 4x4)
+
+# - 1 januari is ok als startdatum
 
 # Een afschot van een bepaald jaar -> hoe hetzelfde afschot verdelen in het jaar
 # ttz een jachtseizoen introduceren.
@@ -34,4 +32,4 @@
 # Er is geen controle over de ratios afschot t.a.v. de werkelijke populatie.
 
 # Beginnen we met de stable stage zonder jacht of stable stage met jacht?
-#
+

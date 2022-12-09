@@ -215,6 +215,31 @@ get_hunting_scen <- function(path){
   return(Hscen)
 }
 
+
+#-----------------------------------------------------------------------
+# Get survival table
+#
+# @param path filename of excelsheet
+#
+# @return list with matrices for survival
+#
+# for each age class, month, female and male
+
+get_survival <- function(path){
+
+  f <- function(path, sheet){
+    df <- readxl::read_excel(path = path, sheet = sheet, range = "A1:F13")
+    return(as.matrix(df))
+  }
+
+  surv <- path %>%
+    readxl::excel_sheets() %>%
+    set_names() %>%
+    map(f, path = path)
+  return(surv)
+}
+
+
 #------------------------------------------------------------------
 
 # Run a single simulation to estimate the total simulation time (seconds)
