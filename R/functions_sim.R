@@ -10,7 +10,7 @@
 #
 # @param init_pop vector with initial population 2 columns: age (months) & sex
 # @param max_month number of months to simulate
-# @param Sm monthly survival for each age class (vector)
+# @param Sm monthly survival for each age class, sex and month (matrix)
 # @param Fm monthly fertility for each age class (vector)
 # @param Hm monthly hunting ratio or absolute hunting for each age class & sex (matrix)
 # @param hunt_abs hunting Hm in absolute numbers (default FALSE)
@@ -86,7 +86,7 @@ sim_boar <- function(init_pop, max_month, Sm, Fm, Hm, hunt_abs = FALSE){
 #
 # @param max_month number of months to simulate
 # @param init_pop vector with initial population 2 columns: age (months) & sex
-# @param Sm monthly survival for each age class (vector)
+# @param Sm monthly survival: age class (vector) or ageclass, sex and month (matrix)
 # @param Fm monthly fertility for each age class (vector)
 # @param Hs monthly hunting scenarios (list)
 # @param hunt_abs hunting in absolute numbers (TRUE) or ratios (FALSE) (default)

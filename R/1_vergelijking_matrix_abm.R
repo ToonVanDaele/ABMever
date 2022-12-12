@@ -45,10 +45,6 @@ Sm <- S^(1/12)
 # Fertility monthly --  nog te bekijken!!
 birth_month <- get_birth_month(csv_filename = "./data/input/birth_month.csv")
 Fm <- set_F(F = F, birth_month = birth_month) # by month
-# reproduction only in month 12
-# Fm <- matrix(data = 0, nrow = 12, ncol = 3, dimnames = list(NULL, ageclasses))
-# Fm[12,] <- F
-# Fm
 
 # Hunting monthly
 # Load all hunting scenario's from excel sheets
@@ -56,11 +52,8 @@ Hscen <- get_hunting_scen(path = "./data/input/hunting_scenarios.xlsx")
 # We only use scenario "N" - no hunting
 Hs <- Hscen[c("N")]
 
-nsim <- 5   # number of simulations
-
 # Set initial age distribution  (nog aan te passen!!)
 init_pop <- set_init_pop(init_agecl = init_agecl, birth_month = birth_month, Sm = Sm)
-#init_pop <- set_init_pop2(init_agecl = init_agecl)
 
 hist(init_pop$age / 12)
 
@@ -68,7 +61,7 @@ hist(init_pop$age / 12)
 # run full simulation
 scen_comp <- sim_scen_boar(init_pop = init_pop,
                            max_year = max_year,
-                           nsim = nsim,
+                           nsim = 5,
                            Sm = Sm,
                            Fm = Fm,
                            Hs = Hs,
@@ -96,3 +89,4 @@ df_num %>%
   geom_smooth(aes(y = mean, ymax = p90, ymin = p10), size = 0.5, stat = "identity") +
   geom_line(data = out_m, aes(x = (time - 1) * 12 + 1, y = n, color = agecl, group = agecl)) +
   geom_point(data = out_m, aes(x = (time - 1) * 12 + 1, y = n, color = agecl, group = agecl))
+
