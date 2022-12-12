@@ -6,12 +6,7 @@
 # bekijken of er effect is
 
 # df_harvest -> volledige populatie informatie (boar - who dies) bijhouden.
-# + sim, scenario en tijdstap. Pas later samenvatting maken. waarom precies?
-# Nu is tracknum en trackhunt analoog. Welke extra info is nuttig?
-
-# Wordt bij fertility ook de overleving van female op maandbasis meegenomen?
-# = analoog aan jaarlijks populatiemodel?
-
+# + sim, scenario en tijdstap.
 
 # Overige nota's
 

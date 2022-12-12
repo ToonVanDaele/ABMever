@@ -32,17 +32,17 @@ sim_boar <- function(init_pop, max_month, Sm, Fm, Hm, hunt_abs = FALSE){
     d <- get_boar(boar)   # get number of individuals in each age class
     tracknum[[time]] <- d # track population
 
+    # natural mortality
+    boar <- mortality(turtles = boar, S = Sm[month,])
+
+    # reproduction
+    boar <- reproduce(turtles = boar, F = Fm[month,])
+
     # hunting
     who_dies <- hunt(turtles = boar, H = Hm[month,], hunt_abs = hunt_abs)
     harvest <- NLwith(agents = boar, var = "who", val = who_dies)
     trackhunt[[time]] <- get_boar_harvest(turtles = harvest) # track hunted
     boar <- die(turtles = boar, who = who_dies) # remove hunted from population
-
-    # reproduction
-    boar <- reproduce(turtles = boar, F = Fm[month,])
-
-    # natural mortality
-    boar <- mortality(turtles = boar, S = Sm[month,])
 
     # aging
     boar <- aging_m(boar)
