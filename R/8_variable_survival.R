@@ -1,5 +1,8 @@
 # Met welk scenario is het totaal afschot het kleinst en wat is het verschil
 # tussen jacht het hele jaar door en een beperkt jachtseizoen.
+#
+# Startdatum modellering is 1 april
+
 
 library(tidyverse)
 library(NetLogoR)
@@ -46,18 +49,19 @@ init_pop <- set_init_pop(init_agecl = init_agecl,
 
 # run simulation and store results
 scen_8 <- sim_scen_boar(init_pop = init_pop,
-                         max_month = 4 * 12 + 1,
-                         nsim = 5,
-                         Sm = S_toigo,    # variable survival -> matrix!!!
-                         Fm = Fm,
-                         Hs = H0)
+                        max_month = 4 * 12 + 1,
+                        start_month = 4,
+                        nsim = 5,
+                        Sm = S_toigo,    # variable survival -> matrix!!!
+                        Fm = Fm,
+                        Hs = H0)
 
 saveRDS(scen_8, file = "./data/interim/scen_8.RDS")
 #scen_8 <- readRDS(file = "./data/interim/scen_8.RDS")
 
 df_num <- get_numboar(scen_8)
 
-# Population
+# Population (by model time)
 df_num %>%
   group_by(time, Hs, sim) %>%
   summarise(tot = sum(n), .groups = "drop_last") %>%
@@ -67,16 +71,41 @@ df_num %>%
   ggplot(aes(x = time, y = mean_n, colour = Hs)) +
   geom_smooth(aes(ymax = p90, ymin = p10), size = 0.5, stat = "identity")
 
+# Population (by calender date)
+df_num %>%
+  filter(time < 17) %>%
+  group_by(date, Hs, sim) %>%
+  summarise(tot = sum(n), .groups = "drop_last") %>%
+  summarise(mean_n = mean(tot),
+            p90 = quantile(tot, prob = 0.9),
+            p10 = quantile(tot, prob = 0.1), .groups = "drop") %>%
+  ggplot(aes(x = date, y = mean_n, colour = Hs)) +
+  geom_smooth(aes(ymax = p90, ymin = p10), size = 0.5, stat = "identity") +
+  scale_x_date(date_labels = "%m/%d", date_breaks = "1 month")
+
 # Age class distribution by year (at 1st of January)
 df_num %>%
-  filter(time %in% seq(from = 1, to = 121, by = 12)) %>%
-  group_by(time, Hs, sim, agecl) %>%
-  summarise(tot = sum(n), .groups = "drop_last") %>%
-  mutate(rel_n = tot / sum(tot)) %>%
-  group_by(time, Hs, agecl) %>%
+  filter(month == 1) %>%
+  group_by(year, Hs, sim, agecl) %>%
+  summarise(tot = sum(n), .groups = "drop_last") %>%  # sum female & male
+  mutate(rel_n = tot / sum(tot)) %>%                  # proportions agecl
+  group_by(year, Hs, agecl) %>%
   summarise(mean_rel_n = mean(rel_n),
             p90 = quantile(rel_n, prob = 0.9),
             p10 = quantile(rel_n, prob = 0.1), .groups = "drop") %>%
-  ggplot(aes(x = (time - 1) / 12, y = mean_rel_n, colour = agecl, shape = Hs)) +
+  ggplot(aes(x = year, y = mean_rel_n, colour = agecl, shape = Hs)) +
+  geom_line() + geom_point() + xlab("year")
+
+# Age class distribution by year (at 1st of April)
+df_num %>%
+  filter(month == 4) %>%
+  group_by(year, Hs, sim, agecl) %>%
+  summarise(tot = sum(n), .groups = "drop_last") %>%  # sum female & male
+  mutate(rel_n = tot / sum(tot)) %>%                  # proportions agecl
+  group_by(year, Hs, agecl) %>%
+  summarise(mean_rel_n = mean(rel_n),
+            p90 = quantile(rel_n, prob = 0.9),
+            p10 = quantile(rel_n, prob = 0.1), .groups = "drop") %>%
+  ggplot(aes(x = year, y = mean_rel_n, colour = agecl, shape = Hs)) +
   geom_line() + geom_point() + xlab("year")
 

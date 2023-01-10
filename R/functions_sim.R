@@ -20,22 +20,22 @@
 #              df_harvest = number of individuals harvested (end of time step)
 #              df_pop = individuals in population at the end of the simulation
 #
-sim_boar <- function(init_pop, max_month, Sm, Fm, Hm, hunt_abs = FALSE){
+sim_boar <- function(init_pop, max_month, start_month = 1,
+                     Sm, Fm, Hm, hunt_abs = FALSE){
 
   require(NetLogoR)
 
   # initialisation
   boar <- abm_init_m(init_pop = init_pop)
-  tracknum <- NULL
-  trackhunt <- NULL
+
+  tracknum <- trackhunt <- NULL
 
   time <- 1
-  month <- 1
+  month <- start_month
 
   while (NLany(boar) & NLcount(boar) < 5000 & time <= max_month) {
 
-    d <- get_boar(boar)   # get number of individuals in each age class
-    tracknum[[time]] <- d # track population
+    tracknum[[time]] <- get_boar(boar) # track individuals in each age class
 
     # natural mortality
     boar <- mortality(turtles = boar, S = Sm[month,])
@@ -62,14 +62,24 @@ sim_boar <- function(init_pop, max_month, Sm, Fm, Hm, hunt_abs = FALSE){
   if (!(NLcount(boar) < 5000)) warning("aborted early: reached max boar (5000)")
 
   # Process tracking data
+  # Set start date
+  g <- lubridate::make_date(year = 2000, month = start_month, day = 1)
+
   # Number of individuals
   df_numboar <- tracknum %>%
     map_dfr(rbind, .id = "time") %>%
-    mutate(time = as.integer(time))
+    mutate(time = as.integer(time)) %>%
+    mutate(date = lubridate::add_with_rollback(g, months(time - 1))) %>%
+    mutate(month = as.integer(lubridate::month(date)),
+           year = as.integer(lubridate::year(date) - 2000))
+
   # harvested individuals
   df_harvest <- trackhunt %>%
     map_dfr(rbind, .id = "time") %>%
-    mutate(time = as.integer(time))
+    mutate(time = as.integer(time)) %>%
+    mutate(date = lubridate::add_with_rollback(g, months(time - 1))) %>%
+    mutate(month = as.integer(lubridate::month(date)),
+           year = as.integer(lubridate::year(date) - 2000))
 
   # store the whole population after the final simulation time step
   df_pop <- boar@.Data %>%
@@ -96,7 +106,7 @@ sim_boar <- function(init_pop, max_month, Sm, Fm, Hm, hunt_abs = FALSE){
 # @param hunt_abs Hunting in absolute numbers (TRUE) or ratios (FALSE) (default)
 # @param dochecktime estimate cpu time (TRUE), default = FALSE
 #
-sim_scen_boar <- function(init_pop, max_month,
+sim_scen_boar <- function(init_pop, max_month, start_month = 1,
                           Sm, Fm, Hs, nsim,
                           hunt_abs = FALSE,
                           dochecktime = FALSE){
@@ -119,20 +129,20 @@ sim_scen_boar <- function(init_pop, max_month,
   # Create dataframe with simulations to run
   df <- expand.grid(Hs = names(Hs),
                     sim = seq(from = 1, to = nsim),
-                    result = list(NULL))
-  df <- df %>%
+                    result = list(NULL)) %>%
     mutate(run = row.names(.)) %>%
     as_tibble()
 
   for (i in 1:nrow(df)) {
 
-  outsim <- sim_boar(init_pop = init_pop,
-                     max_month = max_month,
-                     Sm = Sm,
-                     Fm = Fm,
-                     Hm = Hs[[df$Hs[i]]],
-                     hunt_abs = hunt_abs)
-  df$result[i] <- list(outsim)
+    outsim <- sim_boar(init_pop = init_pop,
+                       max_month = max_month,
+                       start_month = start_month,
+                       Sm = Sm,
+                       Fm = Fm,
+                       Hm = Hs[[df$Hs[i]]],
+                       hunt_abs = hunt_abs)
+    df$result[i] <- list(outsim)
   }
   return(df)
 }
