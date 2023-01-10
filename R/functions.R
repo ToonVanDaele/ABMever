@@ -6,58 +6,57 @@
 
 set_init_pop <- function(init_agecl, birth_month, Sm, max_age = 180){
 
-  # To reduce the burn-in time, the initial population should be close to the
-  # stable stage population distribution. The distribution over the ageclasses
-  # we can derive from the (female only & yearly) matrix population model.
-  # The monthly ABM model requires initial ages at a month resolution.
+  # This function sets distribution of initial ages for the ABM boar model close
+  # to the expected 'stable age distribution'. The distribution over the
+  # ages could also be derived from an extended matrix population model.
+  # For a more accurate initial age distribution the ABM should be run for a
+  # few (4/5) years.
   #
-  # Sex ratio is fixed to 50/50 for the initial population. Sex ratio could be
-  # set randomly, but it would introduce variability in the initial population.
+  # - Sex ratio is fixed to 50/50 for the initial population.
+  # - The initial age for classes 0 (juvenile) and 1 (yearling) are set
+  # following the distribution of births per month. This is then corrected
+  # for the survival during the months between birth and the start of the model.
+  # This function only works for models that start at 1st of January!!
   #
-  # Initial age for classes 0 (juvenile) and 1 (yearling) are set following
-  # the distribution of births per month. This is then corrected for the
-  # survival during the months between birth and the start of the model.
-
-  # !!For now, this function is only for models that start at 1st of January!!
-
-  # @param init_agecl initial distribution in each age class (vector of lenght 3)
-  # @param birth_month = relative distribution of births during the year (vector of length 12)
-  # @param Sm = monthly survival for each age class (vector of length 3)
-  # @param max_age = maximum age allowed (default = 180 months)
+  # @param init_agecl Initial distribution in each age class (vector of length 3)
+  # @param birth_month Relative distribution of births during the year (vector of length 12)
+  # @param Sm Monthly survival for each age class (vector of length 3)
+  # @param max_age Maximum age (default = 180 months)
   #
-  # @return dataframe with 2 columns: age, sex. length = number of individuals
+  # @return Dataframe with 2 columns (age, sex) and one row per individual
   #
   df <- birth_month %>%
 
     # The age distribution of the juveniles and yearlings is according
     # the birth distribution and the respective survival till the end of the month
-    rownames_to_column(var = "m") %>%   # column with number of the month
+    rownames_to_column(var = "m") %>%   # add column with number of the month
     mutate(m = as.numeric(m)) %>%
     mutate(perc_0s = perc * Sm[1] ^ (13 - m), # birth+survival juv. till end of year
            perc_1s = perc * Sm[2] ^ (13 - m)) %>%   # idem for yearling
-    mutate_at(vars(perc_0s, perc_1s), funs(./ sum(.))) %>% # total surviving juv & yearling
-    mutate(cl_0 = init_agecl[1] * perc_0s,       # init pop juveniles
-           cl_1 = init_agecl[2] * perc_1s) %>%   # init pop yearling
-    mutate(cl_0_F = round(cl_0 / 2, 0),          # init pop juveniles female
-           cl_1_F = round(cl_1 / 2, 0)) %>%      # init pop yearling female
-    mutate(cl_0_M = round(cl_0, 0) - cl_0_F,     # init pop juveniles male
-           cl_1_M = round(cl_1, 0) - cl_1_F)     # init pop yearling male
+    map_at(vars(perc_0s, perc_1s), ~./sum(.)) %>%   # calculate proportions
+    as_tibble() %>%
+    mutate(cl_0 = init_agecl[1] * perc_0s,               # juveniles
+           cl_1 = init_agecl[2] * perc_1s) %>%           # yearling
+    mutate(cl_0_F = round(cl_0 / 2, 0),      # juveniles female
+           cl_1_F = round(cl_1 / 2, 0)) %>%   # yearling female
+    mutate(cl_0_M = round(cl_0, 0) - cl_0_F, # juveniles male
+           cl_1_M = round(cl_1, 0) - cl_1_F) # yearling male
 
   # We put everything in separate data frames
-  agecl_0_F <- data.frame(age = rep(1:12, df[,"cl_0_F"]), sex = "F")
-  agecl_1_F <- data.frame(age = rep(1:12, df[,"cl_1_F"]) + 12, sex = "F")
-  agecl_0_M <- data.frame(age = rep(1:12, df[,"cl_0_M"]), sex = "M")
-  agecl_1_M <- data.frame(age = rep(1:12, df[,"cl_1_M"]) + 12, sex = "M")
+  agecl_0_F <- data.frame(age = rep(1:12, df$cl_0_F), sex = "F")
+  agecl_1_F <- data.frame(age = rep(1:12, df$cl_1_F) + 12, sex = "F")
+  agecl_0_M <- data.frame(age = rep(1:12, df$cl_0_M), sex = "M")
+  agecl_1_M <- data.frame(age = rep(1:12, df$cl_1_M) + 12, sex = "M")
 
-  # The initial age for the adults is set with a geometric distribution
-  # which simulates the expected age distribution for adults (to be tuned!!)
+  # The initial age for the adults is set with a geometric distribution to
+  # simulate the expected adult age distribution (shape and rate to be tuned!!)
   # The age distribution of adults has no impact on the population projection
   agecl_2_nb <- round(init_agecl[3], 0)
 
   # Age from a geometric distribution - maxmimum is max_age
   agecl_2_age <- rgamma(n = agecl_2_nb, shape = 2, rate = 0.8) * 12 + 24
   # While values > max age exist -> choose new values from the distribution
-  while(length(agecl_2_age[agecl_2_age > max_age]) > 0) {
+  while (length(agecl_2_age[agecl_2_age > max_age]) > 0) {
     new_values <- rgamma(n = length(agecl_2_age[agecl_2_age > max_age]),
                          shape = 2, rate = 0.8) * 12 + 24
     agecl_2_age[agecl_2_age > max_age] <- new_values

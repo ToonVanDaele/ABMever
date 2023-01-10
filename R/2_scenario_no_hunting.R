@@ -17,7 +17,6 @@ Sm <- S^(1/12)        # monthly survival probability
 F <- c(0, 0.1, 0.5) # yearly fertility
 birth_month <- get_birth_month(csv_filename = "./data/input/birth_month.csv")
 Fm <- set_F(F = F, birth_month = birth_month) # by month
-colSums(Fm)
 
 # Hunting (by month)
 # Load all hunting scenario's from excel sheets
@@ -70,7 +69,7 @@ df_num %>%
   group_by(time, agecl, Hs) %>%
   summarise(mean = mean(n),
             p90 = quantile(n, prob = 0.9),
-            p10 = quantile(n, prob = 0.1)) %>%
+            p10 = quantile(n, prob = 0.1), .groups = "drop") %>%
   ggplot(aes(x = time, color = paste(agecl, Hs))) +
   geom_smooth(aes(y = mean, ymax = p90, ymin = p10), size = 0.5, stat = "identity")
 

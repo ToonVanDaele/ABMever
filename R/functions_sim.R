@@ -8,12 +8,17 @@
 # - time step is months
 # - three age classes (juvenile, yearling, adult)
 #
-# @param init_pop vector with initial population 2 columns: age (months) & sex
+# @param Initial population (vector 2 columns (age (months) & sex))
 # @param max_month number of months to simulate
 # @param Sm monthly survival for each age class, sex and month (matrix)
-# @param Fm monthly fertility for each age class (vector)
+# @param Fm monthly fertility for each age class and month (matrix)
 # @param Hm monthly hunting ratio or absolute hunting for each age class & sex (matrix)
 # @param hunt_abs hunting Hm in absolute numbers (default FALSE)
+#
+# @return list with 3 data frames:
+#              df_numboar = number of individuals (start of time step)
+#              df_harvest = number of individuals harvested (end of time step)
+#              df_pop = individuals in population at the end of the simulation
 #
 sim_boar <- function(init_pop, max_month, Sm, Fm, Hm, hunt_abs = FALSE){
 
@@ -65,7 +70,6 @@ sim_boar <- function(init_pop, max_month, Sm, Fm, Hm, hunt_abs = FALSE){
   df_harvest <- trackhunt %>%
     map_dfr(rbind, .id = "time") %>%
     mutate(time = as.integer(time))
-  trackhunt <<- NULL
 
   # store the whole population after the final simulation time step
   df_pop <- boar@.Data %>%
@@ -84,12 +88,12 @@ sim_boar <- function(init_pop, max_month, Sm, Fm, Hm, hunt_abs = FALSE){
 #---------------------------------------------------------
 # run simulation for 1 or more scenarios
 #
-# @param max_month number of months to simulate
-# @param init_pop vector with initial population 2 columns: age (months) & sex
-# @param Sm monthly survival: age class (vector) or ageclass, sex and month (matrix)
-# @param Fm monthly fertility for each age class (vector)
-# @param Hs monthly hunting scenarios (list)
-# @param hunt_abs hunting in absolute numbers (TRUE) or ratios (FALSE) (default)
+# @param max_month Number of months to simulate
+# @param init_pop Vector with initial population 2 columns: age (months) & sex
+# @param Sm Monthly survival: age class (vector) or ageclass, sex and month (matrix)
+# @param Fm Monthly fertility for each age class (vector length 3)
+# @param Hs Monthly hunting scenarios (list of matrices)
+# @param hunt_abs Hunting in absolute numbers (TRUE) or ratios (FALSE) (default)
 # @param dochecktime estimate cpu time (TRUE), default = FALSE
 #
 sim_scen_boar <- function(init_pop, max_year,
@@ -245,12 +249,6 @@ hunt <- function(turtles, H, time, hunt_abs = FALSE) {
   }
 
   return(who_dies)
-  # track hunted individuals
-  # harvest <- NLwith(agents = turtles, var = "who", val = who_dies)
-  # trackhunt[[time]] <<- get_boar_harvest(turtles = harvest)
-  #
-  # turtles <- die(turtles = turtles, who = who_dies) # remove from list
-  # return(turtles)
 }
 
 #--------------------------------------------------------------------
@@ -273,6 +271,7 @@ reproduce <- function(turtles = boar, F) {
 
   # If any females of age > 10 in population
   if (nrow(who) > 0) {
+
     n <- rpois(n = nrow(who), lambda = F[who[, "agecl"] + 1])
     who_repr <- who[n > 0, "who"]
 

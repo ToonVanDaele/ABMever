@@ -2,8 +2,18 @@
 # Nog te doen:
 
 # - 1 januari is ok als startdatum?  =>  1 april start  (generiek implemeteren)
+# -> bekijken of de functie voor de initiële populatie aangepast moet worden!!
+
+# set_init_pop   functie aan te passen aan Sm in de vorm van een matrix (nu enkel
+# als vector length 3)
 
 # maand (kalendermaand) mee bewaren bij afschot en aantallen
+
+# abm simulaties -> overwegen om leeftijdsklassen volledig te laten vallen
+# en enkel te werken met de effectieve leeftijd (met een absoluut maximum vb. 15 jaar)
+# Dit kan het selectieproces en de indexen sterk vereenvoudigen
+# Voorbereidende verwerking moet dan voor elke parameter een vector maken
+# met voor elke maand een waarde voor overleving, fertiliteit, ...
 
 # afschot tweestaps relatief afschot. bv. 0.1 van totale populatie. Telkens
 # per klasse volgens vaste verhouding.

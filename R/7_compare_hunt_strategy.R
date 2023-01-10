@@ -78,7 +78,8 @@ saveRDS(scen_7b, file = "./data/interim/scen_7b.RDS")
 df_num <- get_numboar(scen_7b)
 df_har <- get_harvest(scen_7b)
 
-run1har <- scen_7b$result[[1]]$df_harvest
+# example output
+scen_7b$result[[1]]$df_harvest
 
 # Population
 df_num %>%
@@ -109,7 +110,7 @@ df_har %>%
   summarise(n = sum(n), .groups = "drop_last") %>%
   summarise(mean = mean(n),
             p90 = quantile(n, prob = 0.9),
-            p10 = quantile(n, prob = 0.1)) %>%
+            p10 = quantile(n, prob = 0.1),.groups = "drop") %>%
   ggplot(aes(x = paste(agecl, Hs), y = mean)) + geom_point() +
   geom_errorbar(aes(ymax = p90, ymin = p10), size = 0.5, stat = "identity")
 
@@ -121,7 +122,7 @@ df_har %>%
   summarise(n = sum(n), .groups = "drop_last") %>%
   summarise(mean = mean(n),
             p90 = quantile(n, prob = 0.9),
-            p10 = quantile(n, prob = 0.1)) %>%
+            p10 = quantile(n, prob = 0.1), .groups = "drop") %>%
   ggplot(aes(x = year, y = mean, colour = agecl)) + geom_point() + geom_line() +
   facet_wrap(~Hs)
 

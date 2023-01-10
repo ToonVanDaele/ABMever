@@ -179,3 +179,4 @@ df_num %>%
             p10 = quantile(rel_n, prob = 0.1), .groups = "drop") %>%
   ggplot(aes(x = time, y = mean_rel_n, colour = agecl, shape = Hs)) + geom_line() +
   geom_point() + geom_errorbar(aes(ymax = p90, ymin = p10))
+

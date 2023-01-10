@@ -106,8 +106,8 @@ df_har %>%
 df_har %>%
   mutate(year = floor(time / 12) + 1) %>%
   group_by(Hs, year, sim) %>%
-  summarise(dep_juv = sum(dep_juv)) %>%
-  summarise(m_dep_juv = mean(dep_juv)) %>%
+  summarise(dep_juv = sum(dep_juv),.groups = "drop_last") %>%
+  summarise(m_dep_juv = mean(dep_juv), .groups = "drop") %>%
   ggplot(aes(x = year, y = m_dep_juv, colour = Hs)) + geom_line()
 
 
@@ -136,6 +136,7 @@ saveRDS(scen_abs, file = "./data/interim/scen_abs.RDS")
 # process results
 #
 df_num <- get_numboar(scen_abs)
+df_har <- get_harvest(scen_abs)
 
 # Total for a specific time, sim and scenario
 df_num %>%
@@ -162,7 +163,7 @@ df_har %>%
   summarise(n = sum(n), .groups = "drop_last") %>%
   summarise(mean = mean(n),
             p90 = quantile(n, prob = 0.9),
-            p10 = quantile(n, prob = 0.1)) %>%
+            p10 = quantile(n, prob = 0.1), .groups = "drop") %>%
   ggplot(aes(x = paste(agecl, Hs), y = mean)) + geom_point() +
   geom_errorbar(aes(ymax = p90, ymin = p10), size = 0.5, stat = "identity")
 

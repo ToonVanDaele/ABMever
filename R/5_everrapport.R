@@ -90,17 +90,19 @@ df_num %>%
   group_by(time, agecl, Hs) %>%
   summarise(mean = mean(n),
             p90 = quantile(n, prob = 0.9),
-            p10 = quantile(n, prob = 0.1)) %>%
+            p10 = quantile(n, prob = 0.1), .groups = "drop") %>%
   ggplot(aes(x = time, color = paste(agecl, Hs))) +
   geom_smooth(aes(y = mean, ymax = p90, ymin = p10), size = 0.5, stat = "identity") +
-  geom_line(data = out_m, aes(x = (time - 1) * 12 + 1, y = n, color = agecl, group = agecl)) +
-  geom_point(data = out_m, aes(x = (time - 1) * 12 + 1, y = n, color = agecl, group = agecl))
+  geom_line(data = out_m,
+            aes(x = (time - 1) * 12 + 1, y = n, color = agecl, group = agecl)) +
+  geom_point(data = out_m,
+             aes(x = (time - 1) * 12 + 1, y = n, color = agecl, group = agecl))
 
 # Total population
 df_num %>%
   group_by(time, sim) %>%
-  summarise(tot = sum(n)) %>%
-  summarise(pop = mean(tot)) %>%
+  summarise(tot = sum(n), .groups = "drop_last") %>%
+  summarise(pop = mean(tot), .groups = "drop") %>%
   ggplot(aes(x = time, y = pop)) + geom_line()
 
 #------------------------------------------------------------
@@ -184,7 +186,7 @@ df_num %>%
 # 6.3.2.  Exclusieve jacht
 
 # We define scenarios with increasing hunting pressure 0 -> 0.9 (yearly basis)
-# on each age class  (3 * 10 scenarios)
+# in each age class  (3 * 10 scenarios)
 
 df <- expand.grid(agecl = ageclasses,
                   Hy = c(seq(from = 0, to = 0.9, by = 0.1), 0.95))

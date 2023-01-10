@@ -67,7 +67,7 @@ df_num %>%
   ggplot(aes(x = time, y = mean_n, colour = Hs)) +
   geom_smooth(aes(ymax = p90, ymin = p10), size = 0.5, stat = "identity")
 
-# Age class distribution by year (1st of January)
+# Age class distribution by year (at 1st of January)
 df_num %>%
   filter(time %in% seq(from = 1, to = 121, by = 12)) %>%
   group_by(time, Hs, sim, agecl) %>%
@@ -77,6 +77,6 @@ df_num %>%
   summarise(mean_rel_n = mean(rel_n),
             p90 = quantile(rel_n, prob = 0.9),
             p10 = quantile(rel_n, prob = 0.1), .groups = "drop") %>%
-  ggplot(aes(x = time, y = mean_rel_n, colour = agecl, shape = Hs)) + geom_line() +
-  geom_point()
+  ggplot(aes(x = (time - 1) / 12, y = mean_rel_n, colour = agecl, shape = Hs)) +
+  geom_line() + geom_point() + xlab("year")
 

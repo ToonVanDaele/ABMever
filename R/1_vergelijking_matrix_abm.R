@@ -84,7 +84,7 @@ df_num %>%
   group_by(time, agecl, Hs) %>%
   summarise(mean = mean(n),
             p90 = quantile(n, prob = 0.9),
-            p10 = quantile(n, prob = 0.1)) %>%
+            p10 = quantile(n, prob = 0.1), .groups = "drop") %>%
   ggplot(aes(x = time, color = paste(agecl, Hs))) +
   geom_smooth(aes(y = mean, ymax = p90, ymin = p10), size = 0.5, stat = "identity") +
   geom_line(data = out_m, aes(x = (time - 1) * 12 + 1, y = n, color = agecl, group = agecl)) +
