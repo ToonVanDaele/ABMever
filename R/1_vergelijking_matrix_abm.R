@@ -60,7 +60,7 @@ hist(init_pop$age / 12)
 #-----------------------------------------------------
 # run full simulation
 scen_comp <- sim_scen_boar(init_pop = init_pop,
-                           max_year = max_year,
+                           max_month = max_year * 12 + 1,
                            nsim = 5,
                            Sm = Sm,
                            Fm = Fm,

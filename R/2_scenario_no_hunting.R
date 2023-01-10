@@ -39,7 +39,7 @@ max(init_pop$age) / 12   # Leeftijd oudste individu initiële populatie
 #-----------------------------------------------------
 # run full simulation
 scen_N <- sim_scen_boar(init_pop = init_pop,
-                        max_year = 5,
+                        max_month = 5 * 12 + 1,
                         nsim = 4,
                         Sm = Sm,
                         Fm = Fm,

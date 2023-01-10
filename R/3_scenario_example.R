@@ -42,7 +42,7 @@ init_pop <- set_init_pop(init_agecl = c(0.3, 0.3, 0.4) * nboar0,
 #-----------------------------------------------------
 # run full simulation and store results
 scen1 <- sim_scen_boar(init_pop = init_pop,
-                       max_year = 5,
+                       max_month = 5 * 12 + 1,
                        nsim = 4,
                        Sm = Sm,
                        Fm = Fm,
@@ -122,7 +122,7 @@ names(Hscen_abs)
 #-----------------------------------------------------
 # run full simulation and store results
 scen_abs <- sim_scen_boar(init_pop = init_pop,
-                       max_year = 5,
+                       max_month = 5 * 12 + 1,
                        nsim = 4,
                        Sm = Sm,
                        Fm = Fm,

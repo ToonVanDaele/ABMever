@@ -63,7 +63,7 @@ init_pop <- set_init_pop(init_agecl = init_agecl,
 #-----------------------------------------------------
 # run full simulation and store results
 scen_int <- sim_scen_boar(init_pop = init_pop,
-                          max_year = 5,
+                          max_month = 5 * 12 + 1,
                           nsim = 4,
                           Sm = Sm,
                           Fm = Fm,

@@ -96,7 +96,7 @@ sim_boar <- function(init_pop, max_month, Sm, Fm, Hm, hunt_abs = FALSE){
 # @param hunt_abs Hunting in absolute numbers (TRUE) or ratios (FALSE) (default)
 # @param dochecktime estimate cpu time (TRUE), default = FALSE
 #
-sim_scen_boar <- function(init_pop, max_year,
+sim_scen_boar <- function(init_pop, max_month,
                           Sm, Fm, Hs, nsim,
                           hunt_abs = FALSE,
                           dochecktime = FALSE){
@@ -111,7 +111,7 @@ sim_scen_boar <- function(init_pop, max_year,
   # Estimate runtime before full simulation
   if (dochecktime == TRUE & hunt_abs == FALSE) {
     cat("estimating runtime... \n")
-    est_time <- checktime(init_pop = init_pop, max_year = max_year, Sm = Sm,
+    est_time <- checktime(init_pop = init_pop, max_month = max_month, Sm = Sm,
               Fm = Fm, Hs = Hs, nsim = nsim)
     cat("Estimated runtime (seconds): ", est_time)
   }
@@ -127,7 +127,7 @@ sim_scen_boar <- function(init_pop, max_year,
   for (i in 1:nrow(df)) {
 
   outsim <- sim_boar(init_pop = init_pop,
-                     max_month = max_year * 12 + 1,
+                     max_month = max_month,
                      Sm = Sm,
                      Fm = Fm,
                      Hm = Hs[[df$Hs[i]]],
