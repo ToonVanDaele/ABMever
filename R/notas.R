@@ -1,13 +1,24 @@
 
 # Nog te doen:
 
-# - 1 januari is ok als startdatum?  =>  1 april start  (generiek implemeteren)
-# -> bekijken of de functie voor de initiële populatie aangepast moet worden!!
+# Lynn seintje geven wanneer een volledige werkende versie klaar is.
 
-# set_init_pop   functie aan te passen aan Sm in de vorm van een matrix (nu enkel
-# als vector length 3)
+# Voor de simulatie (afschotregimes) slechts 3 leeftijdsklassen
 
-# maand (kalendermaand) mee bewaren bij afschot en aantallen
+# afschot tweestaps relatief afschot. bv. 0.1 van totale populatie. Telkens
+# per klasse volgens vaste verhouding.
+# -> repercussies:  wat met 'kleine' leeftijdsklassen?.
+
+# meest realistisch:
+# op basis van afschotgegeven
+# absoluut aantal over een jaar (vb. 3000)
+# verdeling over maanden -> daarna verdeling over de leeftijdsklassen
+
+# Wanneer leg je de startpolatie.
+
+# -> percentage van afschot verdeeld over de maanden
+
+# startmaand -> effect van initiele populatie
 
 # abm simulaties -> overwegen om leeftijdsklassen volledig te laten vallen
 # en enkel te werken met de effectieve leeftijd (met een absoluut maximum vb. 15 jaar)
@@ -15,20 +26,17 @@
 # Voorbereidende verwerking moet dan voor elke parameter een vector maken
 # met voor elke maand een waarde voor overleving, fertiliteit, ...
 
-# afschot tweestaps relatief afschot. bv. 0.1 van totale populatie. Telkens
-# per klasse volgens vaste verhouding.
 
-# is numboar na of voor jacht in het opgegeven tijdstap?
+
 # volgorde: reproduce -> mortality -> hunting -> (aging)
-# bekijken of er effect is  -> waarom vershil bij scenario example.
-
-# df_harvest -> volledige populatie informatie (boar - who dies) bijhouden.
-# + sim, scenario en tijdstap (tijd + kalendermaand) + leeftijd + geslacht
-# zowel populatie als harvest volledige populatie.
-
-
 
 # Overige nota's
+
+# -> bekijken of de functie voor de set_init_pop aangepast moet worden voor
+# variabele startdatum !!
+# set_init_pop   functie aan te passen aan Sm in de vorm van een matrix (nu enkel
+# als vector length 3)
+
 
 # - voorlopig 3 leeftijdsklassen voor populatie behouden (niet naar 4 categoriën)
 # -> ? generiek implementeren
@@ -54,3 +62,6 @@
 # Of overleving leeftijdsafhankelijk? Briederman?? -> nog te bekijken (Jim)
 # repercussie ->
 
+# df_harvest -> volledige populatie informatie (boar - who dies) bijhouden.
+# + sim, scenario en tijdstap (tijd + kalendermaand) + leeftijd + geslacht
+# zowel populatie als harvest volledige populatie.

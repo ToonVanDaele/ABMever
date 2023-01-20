@@ -23,13 +23,17 @@ Fm <- set_F(F = F, birth_month = birth_month) # by month
 Hscen <- get_hunting_scen(path = "./data/input/hunting_scenarios.xlsx")
 
 # N  - no hunting
-# T1 - all equal - all year
-# T2 - all equal - hunting season (sep-march)
-# T3 - adult and yearling only - all year
+# P_ = proportional
+# A_ = absolute number
+# R_ = relative (first population, then age class)
+
+# P_T1 - all equal - all year
+# P_T2 - all equal - hunting season (sep-march)
+# P_T3 - adult and yearling only - all year
 
 # Hunting scenarios are stored in a list of dataframes
 # Here we only use H1 & H3
-Hs <- Hscen[c("N", "T1", "T3")]
+Hs <- Hscen[c("N", "P_T1", "P_T3")]
 
 # ----------------------------------------------------
 # ABM related parameters
@@ -42,7 +46,7 @@ init_pop <- set_init_pop(init_agecl = c(0.3, 0.3, 0.4) * nboar0,
 #-----------------------------------------------------
 # run full simulation and store results
 scen1 <- sim_scen_boar(init_pop = init_pop,
-                       max_month = 5 * 12 + 1,
+                       max_month = 5 * 12 + 1,  # 5 years
                        nsim = 4,
                        Sm = Sm,
                        Fm = Fm,
@@ -127,7 +131,6 @@ scen_abs <- sim_scen_boar(init_pop = init_pop,
                        Sm = Sm,
                        Fm = Fm,
                        Hs = Hscen_abs,
-                       hunt_abs = TRUE,     # Hunting is in absolute numbers!!
                        dochecktime = TRUE)
 saveRDS(scen_abs, file = "./data/interim/scen_abs.RDS")
 #scen_abs <- readRDS(file = "./data/interim/scen_abs.RDS")
@@ -142,7 +145,6 @@ df_har <- get_harvest(scen_abs)
 df_num %>%
   filter(time == 24 & sim == 1 & Hs == "abs1") %>%
   summarise(n = sum(n))
-
 
 #----------------------------------------------------
 # plot

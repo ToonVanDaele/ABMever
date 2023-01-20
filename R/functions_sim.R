@@ -21,12 +21,14 @@
 #              df_pop = individuals in population at the end of the simulation
 #
 sim_boar <- function(init_pop, max_month, start_month = 1,
-                     Sm, Fm, Hm, hunt_abs = FALSE){
+                     Sm, Fm, Hm){
 
   require(NetLogoR)
 
   # initialisation
   boar <- abm_init_m(init_pop = init_pop)
+
+  hunt_type <- substr(names(Hm), 1, 1)  # Hunting type can be 'N', 'P', 'R' or 'A'
 
   tracknum <- trackhunt <- NULL
 
@@ -44,7 +46,7 @@ sim_boar <- function(init_pop, max_month, start_month = 1,
     boar <- reproduce(turtles = boar, F = Fm[month,])
 
     # hunting
-    who_dies <- hunt(turtles = boar, H = Hm[month,], hunt_abs = hunt_abs)
+    who_dies <- hunt(turtles = boar, H = Hm[[1]][month,], hunt_type = hunt_type)
     harvest <- NLwith(agents = boar, var = "who", val = who_dies)
     trackhunt[[time]] <- get_boar_harvest(turtles = harvest) # track hunted
     boar <- die(turtles = boar, who = who_dies) # remove hunted from population
@@ -108,7 +110,6 @@ sim_boar <- function(init_pop, max_month, start_month = 1,
 #
 sim_scen_boar <- function(init_pop, max_month, start_month = 1,
                           Sm, Fm, Hs, nsim,
-                          hunt_abs = FALSE,
                           dochecktime = FALSE){
 
   # Check if Sm is a vector -> make it a matrix
@@ -119,7 +120,7 @@ sim_scen_boar <- function(init_pop, max_month, start_month = 1,
   }
 
   # Estimate runtime before full simulation
-  if (dochecktime == TRUE & hunt_abs == FALSE) {
+  if (dochecktime == TRUE) {
     cat("estimating runtime... \n")
     est_time <- checktime(init_pop = init_pop, max_month = max_month, Sm = Sm,
               Fm = Fm, Hs = Hs, nsim = nsim)
@@ -140,8 +141,7 @@ sim_scen_boar <- function(init_pop, max_month, start_month = 1,
                        start_month = start_month,
                        Sm = Sm,
                        Fm = Fm,
-                       Hm = Hs[[df$Hs[i]]],
-                       hunt_abs = hunt_abs)
+                       Hm = Hs[df$Hs[i]])
     df$result[i] <- list(outsim)
   }
   return(df)
@@ -223,29 +223,31 @@ mortality <- function(turtles, S) {
 #
 # @return turtles population + extra element in global variabel trackhunt.
 #
-hunt <- function(turtles, H, time, hunt_abs = FALSE) {
+hunt <- function(turtles, H, hunt_type = "P") {
   # Select wildboars only (newborns are not hunted -> analoog aan matrix model)
   t2 <- NLwith(agents = turtles, var = "breed", val = "wildboar")
   who_t2 <- of(agents = t2, var = "who") # newborns of current month not included
   age_t2 <- of(agents = t2, var = "agecl") # get age class
   agb_t2 <- of(agents = t2, var = "age") # get age
   sex_t2 <- of(agents = t2, var = "sex") # get sex
-  s <- ifelse(sex_t2 == "F", 1, 5)  # select female or male columns
+  s <- ifelse(sex_t2 == "F", 2, 6)  # select female or male columns
   a <- ifelse(agb_t2 > 60, 1, 0)    # select adult 5 column (instead of adult 3)
 
-  if (hunt_abs == FALSE){  # hunting proportions
+  if (hunt_type == "P"){  # hunting proportions
     tdie <- rbinom(n = NLcount(t2), size = 1, prob = H[age_t2 + s + a])
     who_dies <- who_t2[tdie == 1]    # ID's of hunted turtles
-  }else{    # hunting absolute numbers
+  }
+
+  if (hunt_type == "A") {  # hunting absolute numbers
     # Get the population with specified age class and sex
-    jF <- who_t2[age_t2 == 0 & sex_t2 == "F"]
-    jM <- who_t2[age_t2 == 0 & sex_t2 == "M"]
-    yF <- who_t2[age_t2 == 1 & sex_t2 == "F"]
-    yM <- who_t2[age_t2 == 1 & sex_t2 == "M"]
-    a3F <-who_t2[age_t2 == 2 & sex_t2 == "F"]
-    a3M <-who_t2[age_t2 == 2 & sex_t2 == "M"]
-    a5F <-who_t2[age_t2 == 2 & sex_t2 == "F"]
-    a5M <-who_t2[age_t2 == 2 & sex_t2 == "M"]
+    jF  <- who_t2[age_t2 == 0 & sex_t2 == "F"]
+    jM  <- who_t2[age_t2 == 0 & sex_t2 == "M"]
+    yF  <- who_t2[age_t2 == 1 & sex_t2 == "F"]
+    yM  <- who_t2[age_t2 == 1 & sex_t2 == "M"]
+    a3F <- who_t2[age_t2 == 2 & sex_t2 == "F"]
+    a3M <- who_t2[age_t2 == 2 & sex_t2 == "M"]
+    a5F <- who_t2[age_t2 == 2 & sex_t2 == "F"]
+    a5M <- who_t2[age_t2 == 2 & sex_t2 == "M"]
 
     # sample the required number or remove all (if H > population)
     who_dies <- c(sample(jF, size = min(H["juvenileF"], length(jF))),
@@ -256,6 +258,19 @@ hunt <- function(turtles, H, time, hunt_abs = FALSE) {
                   sample(a3M, size = min(H["adult3M"], length(a3M))),
                   sample(a5F, size = min(H["adult5F"], length(a5F))),
                   sample(a5M, size = min(H["adult5M"], length(a5M))))
+  }
+
+  if (hunt_type == "R") {   # Double relative hunting strategy
+
+    # Here comes the double relative hunting strategy!!
+
+  }
+
+
+  if (hunt_type == "N") {    # No hunting
+
+    who_dies <- numeric()
+
   }
 
   return(who_dies)

@@ -53,7 +53,7 @@ set_init_pop <- function(init_agecl, birth_month, Sm, max_age = 180){
   # The age distribution of adults has no impact on the population projection
   agecl_2_nb <- round(init_agecl[3], 0)
 
-  # Age from a geometric distribution - maxmimum is max_age
+  # Age from a geometric distribution - maximum is max_age
   agecl_2_age <- rgamma(n = agecl_2_nb, shape = 2, rate = 0.8) * 12 + 24
   # While values > max age exist -> choose new values from the distribution
   while (length(agecl_2_age[agecl_2_age > max_age]) > 0) {
@@ -203,7 +203,7 @@ get_birth_month <- function(csv_filename){
 get_hunting_scen <- function(path){
 
   f <- function(path, sheet){
-    df <- readxl::read_excel(path = path, sheet = sheet, range = "A1:H13")
+    df <- readxl::read_excel(path = path, sheet = sheet, range = "A1:I13")
     return(as.matrix(df))
   }
 
