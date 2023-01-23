@@ -110,8 +110,7 @@ sim_boar <- function(init_pop, max_month, start_month = 1,
 # @param Sm Monthly survival: age class (vector) or ageclass, sex and month (matrix)
 # @param Fm Monthly fertility for each age class (vector length 3)
 # @param Hs Monthly hunting scenarios (list of matrices)
-# @param hunt_abs Hunting in absolute numbers (TRUE) or ratios (FALSE) (default)
-#
+
 sim_scen_boar <- function(init_pop, max_month, start_month = 1,
                           Sm, Fm, Hs, nsim){
 

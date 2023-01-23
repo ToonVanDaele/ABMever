@@ -248,8 +248,8 @@ get_survival <- function(path){
 get_numboar <- function(mytb){
 
   df_num <- mytb$result %>%
-  map_dfr("df_numboar", .id = "rowname") %>%
-  left_join(mytb %>%
+    map_dfr("df_numboar", .id = "rowname") %>%
+    left_join(mytb %>%
               dplyr::select(Hs, sim) %>%
               rownames_to_column(),
             by = "rowname") %>%
