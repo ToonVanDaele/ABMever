@@ -133,15 +133,22 @@ get_boar <- function(turtles){
 #
 get_boar_harvest <- function(turtles){
 
-  df <- turtles@.Data %>%
+  # df <- turtles@.Data %>%
+  #   as.data.frame() %>%
+  #   filter(agecl >= 0) %>%      # change to age >=0
+  #   mutate(dj = ifelse(newb < 5, offspring, 0)) %>%
+  #   group_by(sex, agecl) %>%
+  #   summarise(n = n(),
+  #             dep_juv = sum(dj), .groups = "drop") %>%
+  #   mutate(sex = turtles@levels$sex[sex],
+  #          agecl = ageclasses[agecl + 1])
+
+  df <- turtles@.Data[,c("who", "sex", "age", "agecl", "newb", "offspring"),
+                      drop = FALSE] %>%
     as.data.frame() %>%
-    filter(agecl >= 0) %>%      # change to age >=0
-    mutate(dj = ifelse(newb < 5, offspring, 0)) %>%
-    group_by(sex, agecl) %>%
-    summarise(n = n(),
-              dep_juv = sum(dj), .groups = "drop") %>%
     mutate(sex = turtles@levels$sex[sex],
            agecl = ageclasses[agecl + 1])
+
   return(df)
 }
 

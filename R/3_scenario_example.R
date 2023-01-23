@@ -87,7 +87,7 @@ df_num %>%
 # Total harvest by age class and scenario
 df_har %>%
   group_by(agecl, Hs, sim) %>%
-  summarise(n = sum(n), .groups = "drop_last") %>%
+  summarise(n = n(), .groups = "drop_last") %>%
   summarise(mean = mean(n),
             p90 = quantile(n, prob = 0.9),
             p10 = quantile(n, prob = 0.1)) %>%
@@ -96,7 +96,8 @@ df_har %>%
 
 # Cumulative harvest by age class and scenario
 df_har %>%
-  group_by(agecl, Hs, time) %>%
+  group_by(agecl, Hs, time, sim) %>%
+  summarise(n = n(), .groups = "drop_last") %>%
   summarise(mean = mean(n), .groups = "drop_last") %>%
   ungroup() %>%
   complete(time, Hs, agecl, fill = list(mean = 0)) %>%
@@ -107,12 +108,11 @@ df_har %>%
 
 # Number of dependent juveniles by scenario
 df_har %>%
-  mutate(year = floor(time / 12) + 1) %>%
+  mutate(year = lubridate::year(date)) %>%
   group_by(Hs, year, sim) %>%
-  summarise(dep_juv = sum(dep_juv),.groups = "drop_last") %>%
+  summarise(dep_juv = sum(offspring),.groups = "drop_last") %>%
   summarise(m_dep_juv = mean(dep_juv), .groups = "drop") %>%
   ggplot(aes(x = year, y = m_dep_juv, colour = Hs)) + geom_line()
-
 
 #----------------------------------------------------
 # Scenario example absolute numbers

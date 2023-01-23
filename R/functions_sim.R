@@ -10,18 +10,17 @@
 #
 # @param Initial population (vector 2 columns (age (months) & sex))
 # @param max_month number of months to simulate
+# @param start_month month to start the simulation (1..12)
 # @param Sm monthly survival for each age class, sex and month (matrix)
 # @param Fm monthly fertility for each age class and month (matrix)
 # @param Hm monthly hunting ratio or absolute hunting for each age class & sex (matrix)
-# @param hunt_abs hunting Hm in absolute numbers (default FALSE)
 #
 # @return list with 3 data frames:
 #              df_numboar = number of individuals (start of time step)
 #              df_harvest = number of individuals harvested (end of time step)
 #              df_pop = individuals in population at the end of the simulation
 #
-sim_boar <- function(init_pop, max_month, start_month = 1,
-                     Sm, Fm, Hm){
+sim_boar <- function(init_pop, max_month, start_month, Sm, Fm, Hm){
 
   require(NetLogoR)
 
@@ -31,7 +30,6 @@ sim_boar <- function(init_pop, max_month, start_month = 1,
   hunt_type <- substr(names(Hm), 1, 1)  # Hunting type can be 'N', 'P', 'R' or 'A'
 
   tracknum <- trackhunt <- NULL
-
   time <- 1
   month <- start_month
 
@@ -65,15 +63,16 @@ sim_boar <- function(init_pop, max_month, start_month = 1,
 
   # Process tracking data
   # Set start date
-  g <- lubridate::make_date(year = 2000, month = start_month, day = 1)
+  g <- lubridate::make_date(year = 0, month = start_month, day = 1)
 
   # Number of individuals
   df_numboar <- tracknum %>%
     map_dfr(rbind, .id = "time") %>%
     mutate(time = as.integer(time)) %>%
-    mutate(date = lubridate::add_with_rollback(g, months(time - 1))) %>%
-    mutate(month = as.integer(lubridate::month(date)),
-           year = as.integer(lubridate::year(date) - 2000))
+    mutate(date = lubridate::add_with_rollback(g, months(time - 1)))
+
+    # mutate(month = as.integer(lubridate::month(date)),
+    #        year = as.integer(lubridate::year(date)))
 
   # harvested individuals
   df_harvest <- trackhunt %>%
@@ -81,11 +80,10 @@ sim_boar <- function(init_pop, max_month, start_month = 1,
     mutate(time = as.integer(time))
 
   if (!nrow(df_harvest) == 0) {
-
-        df_harvest <- df_harvest %>%
-      mutate(date = lubridate::add_with_rollback(g, months(time - 1))) %>%
-      mutate(month = as.integer(lubridate::month(date)),
-             year = as.integer(lubridate::year(date) - 2000))
+      df_harvest <- df_harvest %>%
+      mutate(date = lubridate::add_with_rollback(g, months(time - 1)))
+      # mutate(month = as.integer(lubridate::month(date)),
+      #        year = as.integer(lubridate::year(date)))
   }
 
   # store the whole population after the final simulation time step
