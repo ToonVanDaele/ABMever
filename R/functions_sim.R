@@ -111,25 +111,15 @@ sim_boar <- function(init_pop, max_month, start_month = 1,
 # @param Fm Monthly fertility for each age class (vector length 3)
 # @param Hs Monthly hunting scenarios (list of matrices)
 # @param hunt_abs Hunting in absolute numbers (TRUE) or ratios (FALSE) (default)
-# @param dochecktime estimate cpu time (TRUE), default = FALSE
 #
 sim_scen_boar <- function(init_pop, max_month, start_month = 1,
-                          Sm, Fm, Hs, nsim,
-                          dochecktime = FALSE){
+                          Sm, Fm, Hs, nsim){
 
   # Check if Sm is a vector (length 3) -> make it a matrix (12 x 3)
   if (!is.matrix(Sm)) {
     Smm <- matrix(data = Sm, nrow = 12, ncol = 6, byrow = TRUE)
     colnames(Smm) <- c(paste0(ageclasses, "F"), paste0(ageclasses, "M"))
     Sm <- Smm
-  }
-
-  # Estimate runtime before full simulation
-  if (dochecktime == TRUE) {
-    cat("estimating runtime... \n")
-    est_time <- checktime(init_pop = init_pop, max_month = max_month, Sm = Sm,
-              Fm = Fm, Hs = Hs, nsim = nsim)
-    cat("Estimated runtime (seconds): ", est_time)
   }
 
   # Create dataframe with simulations to run
@@ -139,7 +129,9 @@ sim_scen_boar <- function(init_pop, max_month, start_month = 1,
     mutate(run = row.names(.)) %>%
     as_tibble()
 
-  for (i in 1:nrow(df)) {
+  pb <- txtProgressBar(max = nrow(df), style = 3, width = 50)
+
+    for (i in 1:nrow(df)) {
 
     outsim <- sim_boar(init_pop = init_pop,
                        max_month = max_month,
@@ -148,7 +140,11 @@ sim_scen_boar <- function(init_pop, max_month, start_month = 1,
                        Fm = Fm,
                        Hm = Hs[df$Hs[i]])
     df$result[i] <- list(outsim)
+
+    setTxtProgressBar(pb, value = i)
   }
+  close(pb)
+
   return(df)
 }
 

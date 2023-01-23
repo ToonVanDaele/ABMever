@@ -70,8 +70,7 @@ scen_7b <- sim_scen_boar(init_pop = df_init_pop,
                          nsim = 5,
                          Sm = Sm,
                          Fm = Fm,
-                         Hs = Hscen[c("H0", "H1", "H2", "H3")],
-                         dochecktime = TRUE)
+                         Hs = Hscen[c("H0", "H1", "H2", "H3")])
 
 saveRDS(scen_7b, file = "./data/interim/scen_7b.RDS")
 #scen_7b <- readRDS(file = "./data/interim/scen_7b.RDS")

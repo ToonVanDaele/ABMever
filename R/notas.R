@@ -3,8 +3,6 @@
 
 # Lynn seintje geven wanneer een volledige werkende versie klaar is.
 
-# Voor de simulatie (afschotregimes) slechts 3 leeftijdsklassen
-
 # afschot tweestaps relatief afschot. bv. 0.1 van totale populatie. Telkens
 # per klasse volgens vaste verhouding.
 # -> repercussies:  wat met 'kleine' leeftijdsklassen?.
@@ -27,9 +25,6 @@
 # met voor elke maand een waarde voor overleving, fertiliteit, ...
 
 
-
-# volgorde: reproduce -> mortality -> hunting -> (aging)
-
 # Overige nota's
 
 # -> bekijken of de functie voor de set_init_pop aangepast moet worden voor
@@ -37,12 +32,7 @@
 # set_init_pop   functie aan te passen aan Sm in de vorm van een matrix (nu enkel
 # als vector length 3)
 
-
-# - voorlopig 3 leeftijdsklassen voor populatie behouden (niet naar 4 categoriën)
-# -> ? generiek implementeren
-
 # -> figuur maken van maximale leeftijd met en zonder jacht -> maximum ongeveer 15 jaar?
-
 
 # Een afschot van een bepaald jaar -> hoe hetzelfde afschot verdelen in het jaar
 # ttz een jachtseizoen introduceren.
@@ -65,3 +55,6 @@
 # df_harvest -> volledige populatie informatie (boar - who dies) bijhouden.
 # + sim, scenario en tijdstap (tijd + kalendermaand) + leeftijd + geslacht
 # zowel populatie als harvest volledige populatie.
+
+# volgorde: reproduce -> mortality -> hunting -> (aging)   - ok
+# Voor de simulatie (afschotregimes) slechts 3 leeftijdsklassen - ok

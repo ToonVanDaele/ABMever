@@ -64,8 +64,7 @@ scen_comp <- sim_scen_boar(init_pop = init_pop,
                            nsim = 5,
                            Sm = Sm,
                            Fm = Fm,
-                           Hs = Hs,
-                           dochecktime = TRUE)
+                           Hs = Hs)
 
 # store output
 saveRDS(scen_comp, file = "./data/interim/scen_comp.RDS")

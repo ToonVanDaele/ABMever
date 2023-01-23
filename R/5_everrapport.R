@@ -160,8 +160,7 @@ scen_int <- sim_scen_boar(init_pop = init_pop,
                           nsim = 4,
                           Sm = Sm,
                           Fm = Fm,
-                          Hs = Hs,
-                          dochecktime = TRUE)
+                          Hs = Hs)
 
 saveRDS(scen_int, file = "./data/interim/scen_int.RDS")
 #scen_int <- readRDS(file = "./data/interim/scen_int.RDS")
@@ -211,8 +210,7 @@ scen_sel <- sim_scen_boar(init_pop = init_pop,
                           nsim = 4,
                           Sm = Sm,
                           Fm = Fm,
-                          Hs = Hsel,
-                          dochecktime = TRUE)
+                          Hs = Hsel)
 saveRDS(scen_sel, file = "./data/interim/scen_sel.RDS")
 #scen_sel <- readRDS(file = "./data/interim/scen_sel.RDS")
 
@@ -258,8 +256,7 @@ scen_ch7 <- sim_scen_boar(init_pop = init_pop,
                           nsim = 5,
                           Sm = Sm,
                           Fm = Fm,
-                          Hs = Hs,
-                          dochecktime = TRUE)
+                          Hs = Hs)
 
 saveRDS(scen_ch7, file = "./data/interim/scen_ch7.RDS")
 #scen_ch7 <- readRDS(file = "./data/interim/scen_ch7.RDS")

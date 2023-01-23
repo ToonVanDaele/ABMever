@@ -48,8 +48,7 @@ scen_h1 <- sim_scen_boar(init_pop = init_pop,
                           nsim = 5,
                           Sm = Sm,
                           Fm = Fm,
-                          Hs = Hs,
-                          dochecktime = TRUE)
+                          Hs = Hs)
 
 saveRDS(scen_h1, file = "./data/interim/scen_h1.RDS")
 #scen_h1 <- readRDS(file = "./data/interim/scen_h1.RDS")

@@ -238,21 +238,6 @@ get_survival <- function(path){
   return(surv)
 }
 
-
-#------------------------------------------------------------------
-
-# Run a single simulation to estimate the total simulation time (seconds)
-
-checktime <- function(init_pop, max_month, Sm, Fm, Hs, nsim){
-
-  koffie <- system.time({ sim_boar(init_pop = init_pop,
-                                   max_month = max_month,
-                                   Sm = Sm,
-                                   Fm = Fm,
-                                   Hm = Hs[df$Hs[1]]) })
-  return(as.double(koffie[3] * nsim * length(Hs)))
-}
-
 #-------------------------------------------------------------
 # process output - get df_numboar
 #
