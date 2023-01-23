@@ -78,10 +78,15 @@ sim_boar <- function(init_pop, max_month, start_month = 1,
   # harvested individuals
   df_harvest <- trackhunt %>%
     map_dfr(rbind, .id = "time") %>%
-    mutate(time = as.integer(time)) %>%
-    mutate(date = lubridate::add_with_rollback(g, months(time - 1))) %>%
-    mutate(month = as.integer(lubridate::month(date)),
-           year = as.integer(lubridate::year(date) - 2000))
+    mutate(time = as.integer(time))
+
+  if (!nrow(df_harvest) == 0) {
+
+        df_harvest <- df_harvest %>%
+      mutate(date = lubridate::add_with_rollback(g, months(time - 1))) %>%
+      mutate(month = as.integer(lubridate::month(date)),
+             year = as.integer(lubridate::year(date) - 2000))
+  }
 
   # store the whole population after the final simulation time step
   df_pop <- boar@.Data %>%
@@ -112,7 +117,7 @@ sim_scen_boar <- function(init_pop, max_month, start_month = 1,
                           Sm, Fm, Hs, nsim,
                           dochecktime = FALSE){
 
-  # Check if Sm is a vector -> make it a matrix
+  # Check if Sm is a vector (length 3) -> make it a matrix (12 x 3)
   if (!is.matrix(Sm)) {
     Smm <- matrix(data = Sm, nrow = 12, ncol = 6, byrow = TRUE)
     colnames(Smm) <- c(paste0(ageclasses, "F"), paste0(ageclasses, "M"))
@@ -230,34 +235,29 @@ hunt <- function(turtles, H, hunt_type = "P") {
   age_t2 <- of(agents = t2, var = "agecl") # get age class
   agb_t2 <- of(agents = t2, var = "age") # get age
   sex_t2 <- of(agents = t2, var = "sex") # get sex
-  s <- ifelse(sex_t2 == "F", 2, 6)  # select female or male columns
-  a <- ifelse(agb_t2 > 60, 1, 0)    # select adult 5 column (instead of adult 3)
+  s <- ifelse(sex_t2 == "F", 2, 5)  # select female or male columns
 
   if (hunt_type == "P"){  # hunting proportions
-    tdie <- rbinom(n = NLcount(t2), size = 1, prob = H[age_t2 + s + a])
+    tdie <- rbinom(n = NLcount(t2), size = 1, prob = H[age_t2 + s])
     who_dies <- who_t2[tdie == 1]    # ID's of hunted turtles
   }
 
   if (hunt_type == "A") {  # hunting absolute numbers
     # Get the population with specified age class and sex
-    jF  <- who_t2[age_t2 == 0 & sex_t2 == "F"]
-    jM  <- who_t2[age_t2 == 0 & sex_t2 == "M"]
-    yF  <- who_t2[age_t2 == 1 & sex_t2 == "F"]
-    yM  <- who_t2[age_t2 == 1 & sex_t2 == "M"]
-    a3F <- who_t2[age_t2 == 2 & sex_t2 == "F"]
-    a3M <- who_t2[age_t2 == 2 & sex_t2 == "M"]
-    a5F <- who_t2[age_t2 == 2 & sex_t2 == "F"]
-    a5M <- who_t2[age_t2 == 2 & sex_t2 == "M"]
+    jF <- who_t2[age_t2 == 0 & sex_t2 == "F"]
+    jM <- who_t2[age_t2 == 0 & sex_t2 == "M"]
+    yF <- who_t2[age_t2 == 1 & sex_t2 == "F"]
+    yM <- who_t2[age_t2 == 1 & sex_t2 == "M"]
+    aF <- who_t2[age_t2 == 2 & sex_t2 == "F"]
+    aM <- who_t2[age_t2 == 2 & sex_t2 == "M"]
 
     # sample the required number or remove all (if H > population)
     who_dies <- c(sample(jF, size = min(H["juvenileF"], length(jF))),
                   sample(jM, size = min(H["juvenileM"], length(jM))),
                   sample(yF, size = min(H["yearlingF"], length(yF))),
                   sample(yM, size = min(H["yearlingM"], length(yM))),
-                  sample(a3F, size = min(H["adult3F"], length(a3F))),
-                  sample(a3M, size = min(H["adult3M"], length(a3M))),
-                  sample(a5F, size = min(H["adult5F"], length(a5F))),
-                  sample(a5M, size = min(H["adult5M"], length(a5M))))
+                  sample(aF, size = min(H["adultF"], length(aF))),
+                  sample(aM, size = min(H["adultM"], length(aM))))
   }
 
   if (hunt_type == "R") {   # Double relative hunting strategy

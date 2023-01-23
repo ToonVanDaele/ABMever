@@ -203,7 +203,7 @@ get_birth_month <- function(csv_filename){
 get_hunting_scen <- function(path){
 
   f <- function(path, sheet){
-    df <- readxl::read_excel(path = path, sheet = sheet, range = "A1:I13")
+    df <- readxl::read_excel(path = path, sheet = sheet, range = "A1:G13")
     return(as.matrix(df))
   }
 
@@ -249,7 +249,7 @@ checktime <- function(init_pop, max_month, Sm, Fm, Hs, nsim){
                                    max_month = max_month,
                                    Sm = Sm,
                                    Fm = Fm,
-                                   Hm = Hs[[1]]) })
+                                   Hm = Hs[df$Hs[1]]) })
   return(as.double(koffie[3] * nsim * length(Hs)))
 }
 
