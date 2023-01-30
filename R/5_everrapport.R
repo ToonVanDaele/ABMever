@@ -63,7 +63,7 @@ init_pop <- set_init_pop(init_agecl = init_agecl, birth_month = birth_month, Sm 
 init_pop %>%
   as_tibble() %>%
   ggplot(aes(x = age / 12)) + geom_histogram(binwidth = 1) +
-  scale_x_continuous(breaks = seq(0, 15,1))
+  scale_x_continuous(breaks = seq(0, 15,1)) + xlab("year")
 
 #-----------------------------------------------------
 # run ABM model
@@ -80,7 +80,7 @@ saveRDS(scen_h4_3, file = "./data/interim/scen_h4_3.RDS")
 #-----------------------------------------------------
 # process results
 
-df_num <- get_numboar(scen_h4_3)
+df_num <- get_numboar(scen_h4_3, df = "df_numboar")
 
 #----------------------------------------------------
 # plot matrix + abm
@@ -139,7 +139,7 @@ fdd <- function(value){
 }
 
 Hs <- map(.x = Hm, .f = fdd)   # apply help function to each element of Hm
-names(Hs) <- Hy  # give the elements in the list a name
+names(Hs) <- paste0("P_", Hy)  # give the elements in the list a name
 
 # ABM related parameters
 
@@ -165,7 +165,7 @@ scen_int <- sim_scen_boar(init_pop = init_pop,
 saveRDS(scen_int, file = "./data/interim/scen_int.RDS")
 #scen_int <- readRDS(file = "./data/interim/scen_int.RDS")
 
-df_num <- get_numboar(scen_int)
+df_num <- get_numboar(scen_int, df = "df_numboar")
 
 #----------------------------------------------------
 # Figuur 6.3.1. Niet selectieve jacht
@@ -175,7 +175,7 @@ df_num %>%
   summarise(mean = mean(gm_lambda_y),
             p90 = quantile(gm_lambda_y, prob = 0.9),
             p10 = quantile(gm_lambda_y, prob = 0.1), .groups = "drop") %>%
-  mutate(Hs = as.numeric(levels(Hs))[Hs]) %>%
+  mutate(Hs = as.numeric(substr(Hs, 3, 5))) %>%
   ggplot(aes(x = Hs, y = mean)) +
   geom_smooth(aes(ymax = p90, ymin = p10), size = 0.5, stat = "identity") +
   scale_x_continuous(breaks = seq(0,1,0.1)) +
@@ -202,7 +202,7 @@ fdd2 <- function(value, agecl){
 }
 
 Hsel <- map2(.x = df$Hm, .y = as.character(df$agecl), .f = fdd2) # apply function
-names(Hsel) <- paste(df$agecl, df$Hy, sep = "_")  # give list elements a name
+names(Hsel) <- paste("P", df$agecl, df$Hy, sep = "_")  # give list elements a name
 
 # run simulation and store results
 scen_sel <- sim_scen_boar(init_pop = init_pop,
@@ -214,7 +214,7 @@ scen_sel <- sim_scen_boar(init_pop = init_pop,
 saveRDS(scen_sel, file = "./data/interim/scen_sel.RDS")
 #scen_sel <- readRDS(file = "./data/interim/scen_sel.RDS")
 
-df_num <- get_numboar(scen_sel)
+df_num <- get_numboar(scen_sel, df = "df_numboar")
 
 #----------------------------------------------------
 # Figuur 15 Exclusieve jacht
@@ -261,7 +261,7 @@ scen_ch7 <- sim_scen_boar(init_pop = init_pop,
 saveRDS(scen_ch7, file = "./data/interim/scen_ch7.RDS")
 #scen_ch7 <- readRDS(file = "./data/interim/scen_ch7.RDS")
 
-df_num <- get_numboar(scen_ch7)
+df_num <- get_numboar(scen_ch7, df = "df_numboar")
 
 # Population in time for each scenario
 df_num %>%

@@ -17,7 +17,7 @@
 #
 # @return list with 3 data frames:
 #              df_numboar = number of individuals (start of time step)
-#              df_harvest = number of individuals harvested (end of time step)
+#              df_harvest = individuals harvested (end of time step)
 #              df_pop = individuals in population at the end of the simulation
 #
 sim_boar <- function(init_pop, max_month, start_month, Sm, Fm, Hm){
@@ -27,15 +27,18 @@ sim_boar <- function(init_pop, max_month, start_month, Sm, Fm, Hm){
   # initialisation
   boar <- abm_init_m(init_pop = init_pop)
 
-  hunt_type <- substr(names(Hm), 1, 1)  # Hunting type can be 'N', 'P', 'R' or 'A'
-
   tracknum <- trackhunt <- NULL
   time <- 1
   month <- start_month
 
+  hunt_type <- substr(names(Hm), 1, 1)  # Hunting type ('N', 'P', 'R' or 'A')
+
   while (NLany(boar) & NLcount(boar) < 5000 & time <= max_month) {
 
     tracknum[[time]] <- get_boar(boar) # track individuals in each age class
+
+    # Get the number of boars each year at start month (used for 'R' hunting)
+    if (month == start_month) st_b <- NLcount(boar)
 
     # natural mortality
     boar <- mortality(turtles = boar, S = Sm[month,])
@@ -44,7 +47,8 @@ sim_boar <- function(init_pop, max_month, start_month, Sm, Fm, Hm){
     boar <- reproduce(turtles = boar, F = Fm[month,])
 
     # hunting
-    who_dies <- hunt(turtles = boar, H = Hm[[1]][month,], hunt_type = hunt_type)
+    who_dies <- hunt(turtles = boar, H = Hm[[1]][month,],
+                     hunt_type = hunt_type, st_b = st_b)
     harvest <- NLwith(agents = boar, var = "who", val = who_dies)
     trackhunt[[time]] <- get_boar_harvest(turtles = harvest) # track hunted
     boar <- die(turtles = boar, who = who_dies) # remove hunted from population
@@ -52,7 +56,7 @@ sim_boar <- function(init_pop, max_month, start_month, Sm, Fm, Hm){
     # aging
     boar <- aging_m(boar)
 
-    # time
+    # next time step
     time <- time + 1
     month <- month + 1
     if (month > 12) month <- 1
@@ -71,8 +75,8 @@ sim_boar <- function(init_pop, max_month, start_month, Sm, Fm, Hm){
     mutate(time = as.integer(time)) %>%
     mutate(date = lubridate::add_with_rollback(g, months(time - 1)))
 
-    # mutate(month = as.integer(lubridate::month(date)),
-    #        year = as.integer(lubridate::year(date)))
+    # mutate(month = as.integer(lubridate::month(date)),  # is dit nog nodig?
+    #        year = as.integer(lubridate::year(date)))    # alles zit in date
 
   # harvested individuals
   df_harvest <- trackhunt %>%
@@ -216,57 +220,75 @@ mortality <- function(turtles, S) {
 #
 # @param turtles netlogo population
 # @param H vector with hunting for each age class and sex (vector length 8)
-# @param time timestep of simulation. Needed to track the harvest
-# @param hunt_abs hunting in absolute numbers (TRUE), or probabilities (FALSE) (default)
+# @param hunt_type hunting strategy type (N, P, R or A)
+# @param st_b number of boars at start of each modelling year (start_month)
 #
-# @return turtles population + extra element in global variabel trackhunt.
+# N  - no hunting
+# P_ = proportional by month, age class & sex
+# A_ = absolute number by month, age class & sex
+# R_ = 2 step proportional: first by population each year at start_month, then by age class & sex
+
+# @return turtles dying (vector id's who)
 #
-hunt <- function(turtles, H, hunt_type = "P") {
-  # Select wildboars only (newborns are not hunted -> analoog aan matrix model)
-  t2 <- NLwith(agents = turtles, var = "breed", val = "wildboar")
-  who_t2 <- of(agents = t2, var = "who") # newborns of current month not included
-  age_t2 <- of(agents = t2, var = "agecl") # get age class
-  agb_t2 <- of(agents = t2, var = "age") # get age
-  sex_t2 <- of(agents = t2, var = "sex") # get sex
-  s <- ifelse(sex_t2 == "F", 2, 5)  # select female or male columns
+hunt <- function(turtles, H, hunt_type = "P", st_b = NULL) {
 
-  if (hunt_type == "P"){  # hunting proportions
-    tdie <- rbinom(n = NLcount(t2), size = 1, prob = H[age_t2 + s])
-    who_dies <- who_t2[tdie == 1]    # ID's of hunted turtles
-  }
+  switch(hunt_type,
+         P = {   # hunting proportions through year by class & sex
 
-  if (hunt_type == "A") {  # hunting absolute numbers
-    # Get the population with specified age class and sex
-    jF <- who_t2[age_t2 == 0 & sex_t2 == "F"]
-    jM <- who_t2[age_t2 == 0 & sex_t2 == "M"]
-    yF <- who_t2[age_t2 == 1 & sex_t2 == "F"]
-    yM <- who_t2[age_t2 == 1 & sex_t2 == "M"]
-    aF <- who_t2[age_t2 == 2 & sex_t2 == "F"]
-    aM <- who_t2[age_t2 == 2 & sex_t2 == "M"]
+           # Select wildboars only (newborns of the month are not hunted)
+           t2 <- NLwith(agents = turtles, var = "breed", val = "wildboar")
+           who_t2 <- of(agents = t2, var = "who") # no newborns of current month
+           age_t2 <- of(agents = t2, var = "agecl") # get age class
+           agb_t2 <- of(agents = t2, var = "age") # get age
+           sex_t2 <- of(agents = t2, var = "sex") # get sex
+           s <- ifelse(sex_t2 == "F", 2, 5)  # select female or male columns
+           tdie <- rbinom(n = NLcount(t2), size = 1, prob = H[age_t2 + s])
+           who_dies <- who_t2[tdie == 1]    # ID's of hunted turtles
+           return(who_dies)
+           },
 
-    # sample the required number or remove all (if H > population)
-    who_dies <- c(sample(jF, size = min(H["juvenileF"], length(jF))),
-                  sample(jM, size = min(H["juvenileM"], length(jM))),
-                  sample(yF, size = min(H["yearlingF"], length(yF))),
-                  sample(yM, size = min(H["yearlingM"], length(yM))),
-                  sample(aF, size = min(H["adultF"], length(aF))),
-                  sample(aM, size = min(H["adultM"], length(aM))))
-  }
+         R = {    # Double relative hunting strategy
 
-  if (hunt_type == "R") {   # Double relative hunting strategy
+           n <- st_b * H[1]
 
-    # Here comes the double relative hunting strategy!!
+           jF <- turtles[turtles$sex == "F" & turtles$agecl == 0, "who", drop = FALSE]
+           jM <- turtles[turtles$sex == "M" & turtles$agecl == 0, "who", drop = FALSE]
+           yF <- turtles[turtles$sex == "F" & turtles$agecl == 1, "who", drop = FALSE]
+           yM <- turtles[turtles$sex == "M" & turtles$agecl == 1, "who", drop = FALSE]
+           aF <- turtles[turtles$sex == "F" & turtles$agecl == 2, "who", drop = FALSE]
+           aM <- turtles[turtles$sex == "M" & turtles$agecl == 2, "who", drop = FALSE]
 
-  }
+           who_dies <- c(sample(x = jF, size = min(H["juvenileF"] * n, length(jF))),
+                         sample(x = jM, size = min(H["juvenileM"] * n, length(jM))),
+                         sample(x = yF, size = min(H["yearlingF"] * n, length(yF))),
+                         sample(x = yM, size = min(H["yearlingM"] * n, length(yM))),
+                         sample(x = aF, size = min(H["adultF"] * n, length(aF))),
+                         sample(x = aM, size = min(H["adultM"] * n, length(aM))))
 
+           return(who_dies)
+          },
 
-  if (hunt_type == "N") {    # No hunting
+         A = {    # hunting absolute numbers (month, class, sex)
 
-    who_dies <- numeric()
+          # Get the population with specified age class and sex
+          jF <- turtles[turtles$sex == "F" & turtles$agecl == 0, "who", drop = FALSE]
+          jM <- turtles[turtles$sex == "M" & turtles$agecl == 0, "who", drop = FALSE]
+          yF <- turtles[turtles$sex == "F" & turtles$agecl == 1, "who", drop = FALSE]
+          yM <- turtles[turtles$sex == "M" & turtles$agecl == 1, "who", drop = FALSE]
+          aF <- turtles[turtles$sex == "F" & turtles$agecl == 2, "who", drop = FALSE]
+          aM <- turtles[turtles$sex == "M" & turtles$agecl == 2, "who", drop = FALSE]
 
-  }
+          # sample the required number or remove all (if H > population)
+          who_dies <- c(sample(jF, size = min(H["juvenileF"], length(jF))),
+                        sample(jM, size = min(H["juvenileM"], length(jM))),
+                        sample(yF, size = min(H["yearlingF"], length(yF))),
+                        sample(yM, size = min(H["yearlingM"], length(yM))),
+                        sample(aF, size = min(H["adultF"], length(aF))),
+                        sample(aM, size = min(H["adultM"], length(aM))))
+          return(who_dies)
+            },
 
-  return(who_dies)
+         N = numeric())   # no hunting
 }
 
 #--------------------------------------------------------------------

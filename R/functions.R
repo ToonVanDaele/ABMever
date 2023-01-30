@@ -133,16 +133,6 @@ get_boar <- function(turtles){
 #
 get_boar_harvest <- function(turtles){
 
-  # df <- turtles@.Data %>%
-  #   as.data.frame() %>%
-  #   filter(agecl >= 0) %>%      # change to age >=0
-  #   mutate(dj = ifelse(newb < 5, offspring, 0)) %>%
-  #   group_by(sex, agecl) %>%
-  #   summarise(n = n(),
-  #             dep_juv = sum(dj), .groups = "drop") %>%
-  #   mutate(sex = turtles@levels$sex[sex],
-  #          agecl = ageclasses[agecl + 1])
-
   df <- turtles@.Data[,c("who", "sex", "age", "agecl", "newb", "offspring"),
                       drop = FALSE] %>%
     as.data.frame() %>%
@@ -214,6 +204,11 @@ get_hunting_scen <- function(path){
     return(as.matrix(df))
   }
 
+  # g <- function(path, sheet){
+  #   v <- readxl::read_excel(path = path, sheet = sheet, range = "A1:C1")
+  #   return(v)
+  # }
+
   Hscen <- path %>%
     readxl::excel_sheets() %>%
     set_names() %>%
@@ -249,13 +244,14 @@ get_survival <- function(path){
 # process output - get df_numboar
 #
 # @param mytb simulation output from scen_sim_boar function (tibble)
+# @param df the dataframe to extract data from
 #
-# @return data frame with number of boars by age class, sex, hunting scenario and simulation
-#
-get_numboar <- function(mytb){
+# @return data frame rowbind from a list of dataframes (model output)
+
+get_numboar <- function(mytb, df = "df_numboar"){
 
   df_num <- mytb$result %>%
-    map_dfr("df_numboar", .id = "rowname") %>%
+    map_dfr(df, .id = "rowname") %>%
     left_join(mytb %>%
               dplyr::select(Hs, sim) %>%
               rownames_to_column(),
@@ -266,27 +262,6 @@ get_numboar <- function(mytb){
   return(df_num)
 }
 
-#-------------------------------------------------------------
-# process output - get df_harvest
-#
-# @param mytb simulation output from scen_sim_boar function (tibble)
-#
-# @return data frame with number of harvest boars by age class, sex, hunting scenario and simulation
-#
-
-get_harvest <- function(mytb){
-
-  df_num <- mytb$result %>%
-    map_dfr("df_harvest", .id = "rowname") %>%
-    left_join(mytb %>%
-                dplyr::select(Hs, sim) %>%
-                rownames_to_column(),
-              by = "rowname") %>%
-    mutate(sex = as.factor(sex),
-           agecl = as.factor(agecl),
-           Hs = as.factor(Hs))
-  return(df_num)
-}
 
 #-------------------------------------------------------------
 # process output - get age distribution

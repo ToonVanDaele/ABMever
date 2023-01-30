@@ -73,7 +73,7 @@ saveRDS(scen_comp, file = "./data/interim/scen_comp.RDS")
 #-----------------------------------------------------
 # process results
 #
-df_num <- get_numboar(scen_comp)
+df_num <- get_numboar(scen_comp, df = "df_numboar")
 
 #----------------------------------------------------
 # plot matrix + abm

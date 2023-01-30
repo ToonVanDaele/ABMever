@@ -35,7 +35,6 @@ nboar0 <- 500    # initial population size
 init_pop <- set_init_pop(init_agecl = c(0.3, 0.3, 0.4) * nboar0,
                          birth_month = birth_month, Sm = Sm)
 
-max(init_pop$age) / 12   # Leeftijd oudste individu initiële populatie
 #-----------------------------------------------------
 # run full simulation
 scen_N <- sim_scen_boar(init_pop = init_pop,
@@ -58,7 +57,7 @@ scen_N$result[[1]]$df_pop
 # met rbind_rows kunnen resultaten van vroegere simulaties worden samengevoegd.
 # Zo moeten simulaties niet steeds opnieuw uitgevoerd worden.
 
-df_num <- get_numboar(scen_N)
+df_num <- get_numboar(scen_N, df = "df_numboar")
 
 #----------------------------------------------------
 # plot

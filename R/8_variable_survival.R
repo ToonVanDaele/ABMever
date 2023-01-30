@@ -3,7 +3,6 @@
 #
 # Startdatum modellering is 1 april
 
-
 library(tidyverse)
 library(NetLogoR)
 library(popbio)
@@ -59,7 +58,7 @@ scen_8 <- sim_scen_boar(init_pop = init_pop,
 saveRDS(scen_8, file = "./data/interim/scen_8.RDS")
 #scen_8 <- readRDS(file = "./data/interim/scen_8.RDS")
 
-df_num <- get_numboar(scen_8)
+df_num <- get_numboar(scen_8, df = "df_numboar")
 
 # Population (by model time)
 df_num %>%

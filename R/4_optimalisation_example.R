@@ -46,7 +46,7 @@ fdd <- function(value){
 }
 
 Hs <- map(.x = Hm, .f = fdd)
-names(Hs) <- Hy  # give the list a name
+names(Hs) <- paste0("P_", Hy)  # give the list a name
 
 # ----------------------------------------------------
 # ABM related parameters
@@ -70,8 +70,7 @@ scen_int <- sim_scen_boar(init_pop = init_pop,
                           Hs = Hs)
 saveRDS(scen_int, file = "./data/interim/scen_int.RDS")
 
-df_num <- get_numboar(scen_int)
-df_har <- get_harvest(scen_int)
+df_num <- get_numboar(scen_int, df = "df_numboar")
 
 #----------------------------------------------------
 
@@ -83,7 +82,7 @@ df_num %>%
   summarise(mean = mean(gm_lambda_y),
             p90 = quantile(gm_lambda_y, prob = 0.9),
             p10 = quantile(gm_lambda_y, prob = 0.1), .groups = "drop") %>%
-  mutate(Hs = as.numeric(levels(Hs))[Hs]) %>%
+  mutate(Hs = as.numeric(substr(Hs, 3,5))) %>%
   ggplot(aes(x = Hs, y = mean)) +
     geom_smooth(aes(ymax = p90, ymin = p10), size = 0.5, stat = "identity") +
   scale_x_continuous(breaks = seq(0,1,0.1)) +

@@ -3,19 +3,6 @@
 
 # Lynn seintje geven wanneer een volledige werkende versie klaar is.
 
-# afschot tweestaps relatief afschot. bv. 0.1 van totale populatie. Telkens
-# per klasse volgens vaste verhouding.
-# -> repercussies:  wat met 'kleine' leeftijdsklassen?.
-
-# meest realistisch:
-# op basis van afschotgegeven
-# absoluut aantal over een jaar (vb. 3000)
-# verdeling over maanden -> daarna verdeling over de leeftijdsklassen
-
-# Wanneer leg je de startpolatie.
-
-# -> percentage van afschot verdeeld over de maanden
-
 # startmaand -> effect van initiele populatie
 
 # abm simulaties -> overwegen om leeftijdsklassen volledig te laten vallen

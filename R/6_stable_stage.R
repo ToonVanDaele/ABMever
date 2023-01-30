@@ -53,7 +53,7 @@ scen_h1 <- sim_scen_boar(init_pop = init_pop,
 saveRDS(scen_h1, file = "./data/interim/scen_h1.RDS")
 #scen_h1 <- readRDS(file = "./data/interim/scen_h1.RDS")
 
-df_num <- get_numboar(scen_h1)
+df_num <- get_numboar(scen_h1, df = "df_numboar")
 
 # Population
 df_num %>%
@@ -108,7 +108,7 @@ scen_h2 <- sim_scen_boar(init_pop = init_pop,
 saveRDS(scen_h2, file = "./data/interim/scen_h2.RDS")
 #scen_h2 <- readRDS(file = "./data/interim/scen_h2.RDS")
 
-df_num <- get_numboar(scen_h2)
+df_num <- get_numboar(scen_h2, df = "df_numboar")
 
 # Population
 df_num %>%
@@ -154,7 +154,7 @@ scen_h3 <- sim_scen_boar(init_pop = df_init_pop,
 saveRDS(scen_h3, file = "./data/interim/scen_h3.RDS")
 #scen_h3 <- readRDS(file = "./data/interim/scen_h3.RDS")
 
-df_num <- get_numboar(scen_h3)
+df_num <- get_numboar(scen_h3, df = "df_numboar")
 
 # Population
 df_num %>%
