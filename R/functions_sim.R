@@ -1,7 +1,5 @@
 # ABM functions
 #
-# require NetlogoR
-#
 #----------------------------------------------------------------------
 # Run a single ABM simulation
 #
@@ -292,11 +290,11 @@ hunt <- function(turtles, H, hunt_type = "P", st_b = NULL) {
 }
 
 #--------------------------------------------------------------------
-## reproduction
+# Reproduction
 #
-# Only turtles of age > 10 reproduce
-# Newborns have 50/50 sex ratio
-# Make sure reproduction values are correct for the given time base
+# - Only turtles of age > 10 reproduce
+# - Newborns have 50/50 sex ratio
+# - Make sure reproduction values are correct for the given time base
 #
 # @param turtles turtles object
 # @param F vector with reproduction for each class
@@ -341,7 +339,7 @@ reproduce <- function(turtles = boar, F) {
 }
 
 #--------------------------------------------------------------------
-# aging
+# Aging
 #
 # Increase age, change ageclass and breed type
 #

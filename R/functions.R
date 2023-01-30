@@ -176,9 +176,6 @@ get_birth_month <- function(csv_filename){
 
 #  filename <- "https://raw.githubusercontent.com/inbo/fis-projecten/305-rerun-geboortepiek/Grofwild/Populatiemodel-Everzwijn/Output/Geboortepiek/bp_results_1month.csv?token=GHSAT0AAAAAABYGSVSY725WYIFIZ4K4DKM6YZ23W6Q"
 
-# df <- read.csv(file = filename)
-# write.csv(df, file = csv_filename")
-
   df <- read.csv(file = csv_filename)
 
   if (round(sum(df$per),2) != 100)
@@ -191,7 +188,7 @@ get_birth_month <- function(csv_filename){
 
 #-----------------------------------------------------------------------
 
-# Get hunting scenario's
+# Load hunting scenario's
 #
 # @param path filename of excelsheet
 #
@@ -204,11 +201,6 @@ get_hunting_scen <- function(path){
     return(as.matrix(df))
   }
 
-  # g <- function(path, sheet){
-  #   v <- readxl::read_excel(path = path, sheet = sheet, range = "A1:C1")
-  #   return(v)
-  # }
-
   Hscen <- path %>%
     readxl::excel_sheets() %>%
     set_names() %>%
@@ -216,9 +208,8 @@ get_hunting_scen <- function(path){
   return(Hscen)
 }
 
-
 #-----------------------------------------------------------------------
-# Get survival table
+# Load survival table
 #
 # @param path filename of excelsheet
 #
