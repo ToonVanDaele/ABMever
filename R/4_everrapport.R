@@ -11,7 +11,7 @@ source("R/functions_matrix.R")
 #---------------------------------
 # Set overall demographic parameters
 ageclasses <- c("juvenile", "yearling", "adult")
-nboar0 <- 100    # initial population size
+nboar0 <- 500    # initial population size
 max_year <- 10    # number of years to simulate
 
 # Demographic parameters (table 10, p.30)
@@ -36,7 +36,7 @@ out_m <- matrix_proj(A = mat$mat_h, n = init_agecl / 2, iterations = max_year + 
 
 # Plot
 ggplot(data = out_m, aes(x = time, y = n, color = agecl, group = agecl)) +
-  geom_line()
+  geom_line() + scale_x_continuous(limits = c(1, 10), breaks = seq(1, 10))
 
 lambda(mat$mat)    # ok p.30
 stable.stage(mat$mat)  # ok figuur 8
@@ -143,7 +143,7 @@ names(Hs) <- paste0("P_", Hy)  # give the elements in the list a name
 
 # ABM related parameters
 
-nboar0 <- 100    # initial population size
+nboar0 <- 500    # initial population size
 max_year <- 5    # number of years to simulate
 
 # Create projection matrix (for stable stage as initial population)
@@ -220,9 +220,9 @@ df_num <- get_numboar(scen_sel, df = "df_numboar")
 # Figuur 15 Exclusieve jacht
 df_num %>%
   calc_lambda(burnin = 24) %>%
-  mutate(temp = str_split_fixed(string = Hs, pattern = "_", n = 2)) %>%
-  mutate(agecl = temp[,1],
-         Hscen = temp[,2]) %>%
+  mutate(temp = str_split_fixed(string = Hs, pattern = "_", n = 3)) %>%
+  mutate(agecl = temp[,2],
+         Hscen = temp[,3]) %>%
   dplyr::select(-"temp") %>%
   group_by(Hscen, agecl) %>%
   summarise(lambda = mean(gm_lambda_y),
@@ -239,7 +239,7 @@ df_num %>%
 # Hoofdstuk 7 - Afschotregimes en absolute aantallen
 
 # Select 'afschotscenarios' (tabel 15, p. 46)
-Hs <- Hscen[c("N", "H0", "H1", "H2", "H3", "H4", "H5", "H6")]
+Hs <- Hscen[c("N", "P_1", "P_2", "P_3", "P_4")]
 
 # ABM related parameters
 nboar0 <- 1000    # initial population size

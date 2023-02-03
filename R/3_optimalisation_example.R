@@ -47,6 +47,7 @@ fdd <- function(value){
 
 Hs <- map(.x = Hm, .f = fdd)
 names(Hs) <- paste0("P_", Hy)  # give the list a name
+Hs
 
 # ----------------------------------------------------
 # ABM related parameters
@@ -77,7 +78,7 @@ df_num <- get_numboar(scen_int, df = "df_numboar")
 # Time series: number individuals by hunting scenario
 
 df_num %>%
-  calc_lambda() %>%
+  calc_lambda(burnin = 24) %>%
   group_by(Hs) %>%
   summarise(mean = mean(gm_lambda_y),
             p90 = quantile(gm_lambda_y, prob = 0.9),

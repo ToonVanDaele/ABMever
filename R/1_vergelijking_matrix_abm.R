@@ -18,7 +18,7 @@ max_year <- 15    # number of years to simulate
 # Survival rate by age class
 S <- c(0.6, 0.8, 0.9) # yearly survival probability
 # Fertility rate by age class
-F <- c(0.1, 0.2, 0.5) # yearly fertility
+F <- c(0, 0.1, 0.5) # yearly fertility
 # Harvest rate by age class
 H <- c(0, 0, 0)
 
@@ -52,7 +52,7 @@ Hscen <- get_hunting_scen(path = "./data/input/hunting_scenarios.xlsx")
 # We only use scenario "N" - no hunting
 Hs <- Hscen[c("N")]
 
-# Set initial age distribution  (nog aan te passen!!)
+# Set initial age distribution
 init_pop <- set_init_pop(init_agecl = init_agecl, birth_month = birth_month, Sm = Sm)
 
 hist(init_pop$age / 12)
@@ -72,11 +72,11 @@ saveRDS(scen_comp, file = "./data/interim/scen_comp.RDS")
 
 #-----------------------------------------------------
 # process results
-#
+
 df_num <- get_numboar(scen_comp, df = "df_numboar")
 
 #----------------------------------------------------
-# plot matrix + abm
+# plot matrix model + agent based model
 
 df_num %>%
   filter(sex == "F") %>%

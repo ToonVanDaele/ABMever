@@ -3,7 +3,7 @@
 
 # Lynn seintje geven wanneer een volledige werkende versie klaar is.
 
-# startmaand -> effect van initiele populatie
+# startmaand -> effect van initiele populatie?
 
 # abm simulaties -> overwegen om leeftijdsklassen volledig te laten vallen
 # en enkel te werken met de effectieve leeftijd (met een absoluut maximum vb. 15 jaar)

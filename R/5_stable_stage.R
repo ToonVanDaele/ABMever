@@ -1,8 +1,6 @@
 # Assessement of time till stable stage for a hunting scenario
 
 library(tidyverse)
-library(NetLogoR)
-library(popbio)
 source("R/functions.R")
 source("R/functions_sim.R")
 source("R/functions_matrix.R")
@@ -10,7 +8,7 @@ source("R/functions_matrix.R")
 #---------------------------------
 # Overall demographic parameters
 ageclasses <- c("juvenile", "yearling", "adult")
-nboar0 <- 1000    # initial population size
+nboar0 <- 100    # initial population size
 max_year <- 15    # number of years to simulate
 
 # Survival
@@ -29,7 +27,7 @@ Fm <- set_F(F = F, birth_month = birth_month) # Fertility by Month
 Hscen <- get_hunting_scen(path = "./data/input/hunting_scenarios.xlsx")
 names(Hscen)
 
-Hs <- Hscen[c("H0", "H1", "H2")]  # Select 3 different hunting scenarios
+Hs <- Hscen[c("N", "P_1", "P_2")]  # Select 3 different hunting scenarios
 
 # We run a ABM simulation to see how long it takes till a stable stage
 # distribution is reached for this hunting scenario.
@@ -90,12 +88,11 @@ df_num %>%
   ggplot(aes(x = time, y = mean_rel_n, colour = agecl, shape = Hs)) + geom_line() +
   geom_point() + geom_errorbar(aes(ymax = p90, ymin = p10), width = 0.8)
 
-# After 4 years the age distribution seems to stabilize. We run the model again
-# for 4 years (till January 1st) for hunting scenario H0 and use the end
-# population as initial population for the further analysis.
-# As we need exactly 1000 at start We sample 1000 individuals from this population.
+# After a few years the age distribution stabilizes. We run the model again
+# for 4 years (till January 1st) for hunting scenario 'N' and use a sample of
+# the end population as an initial population for the further analysis.
 
-H0 <- Hscen["H0"]
+N <- Hscen["N"]
 
 # run simulation and store results
 scen_h2 <- sim_scen_boar(init_pop = init_pop,
@@ -103,7 +100,7 @@ scen_h2 <- sim_scen_boar(init_pop = init_pop,
                          nsim = 5,
                          Sm = Sm,
                          Fm = Fm,
-                         Hs = H0)
+                         Hs = N)
 
 saveRDS(scen_h2, file = "./data/interim/scen_h2.RDS")
 #scen_h2 <- readRDS(file = "./data/interim/scen_h2.RDS")
@@ -149,7 +146,7 @@ scen_h3 <- sim_scen_boar(init_pop = df_init_pop,
                          nsim = 5,
                          Sm = Sm,
                          Fm = Fm,
-                         Hs = H0)
+                         Hs = N)
 
 saveRDS(scen_h3, file = "./data/interim/scen_h3.RDS")
 #scen_h3 <- readRDS(file = "./data/interim/scen_h3.RDS")

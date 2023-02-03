@@ -28,11 +28,11 @@ Fm <- set_F(F = F, birth_month = birth_month)
 
 # Hunting
 # Load hunting scenario's from excel sheet
-Hscen <- get_hunting_scen(path = "./data/input/hunting_scenarios_rel.xlsx")
+Hscen <- get_hunting_scen(path = "./data/input/hunting_scenarios.xlsx")
 names(Hscen)
 
 # Select "N"
-H0 <- Hscen[c("N")]  # Select hunting scenario 'N'
+H0 <- Hscen["N"]  # Select hunting scenario 'N'
 
 # Run an ABM simulation for 4 years, required to find stable stage distribution
 
@@ -70,7 +70,7 @@ scen_7b <- sim_scen_boar(init_pop = df_init_pop,
                          nsim = 5,
                          Sm = Sm,
                          Fm = Fm,
-                         Hs = Hscen[c("N", "P_H1", "P_H2", "P_H3")])
+                         Hs = Hscen[c("N", "P_1", "P_2", "P_3")])
 
 saveRDS(scen_7b, file = "./data/interim/scen_7b.RDS")
 #scen_7b <- readRDS(file = "./data/interim/scen_7b.RDS")
@@ -144,19 +144,5 @@ df_har %>%
             p90 = quantile(sum_dep_juv, prob = 0.9),
             p10 = quantile(sum_dep_juv, prob = 0.1), .groups = "drop_last") %>%
   ggplot(aes(x = Hs, y = mean_dep_juv)) + geom_point() +
-  geom_errorbar(aes(ymin = p10, ymax = p90))
-
-# ratio of dependent juveniles and total hunting first 2 years
-df_har %>%
-  filter(lubridate::year(date) < 3) %>%
-  mutate(dep_juv = ifelse(newb < 5, offspring, 0)) %>%
-  group_by(Hs, sim) %>%
-  summarise(sum_dep_juv = sum(dep_juv),
-            sum_n = n(), .groups = "drop_last") %>%
-  mutate(r_dep_juv = sum_dep_juv / sum_n) %>%
-  summarise(mean_r_dep_juv = mean(r_dep_juv),
-            p90 = quantile(r_dep_juv, prob = 0.9),
-            p10 = quantile(r_dep_juv, prob = 0.1), .groups = "drop_last") %>%
-  ggplot(aes(x = Hs, y = mean_r_dep_juv)) + geom_point() +
   geom_errorbar(aes(ymin = p10, ymax = p90))
 

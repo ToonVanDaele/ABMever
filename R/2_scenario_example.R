@@ -13,9 +13,11 @@ ageclasses <- c("Juvenile", "Yearling", "Adult")
 S <- c(0.6, 0.8, 0.9) # yearly survival probability
 Sm <- S^(1/12)        # monthly survival probability
 
-# Fertility
-F <- c(0, 0.1, 0.5) # yearly fertility
+# Fertility (yearly and distribution by month)
+F <- c(0, 0.1, 0.5) # yearly fertility by age class
+# Distribution of fertility by month
 birth_month <- get_birth_month(csv_filename = "./data/input/birth_month.csv")
+# Distribution by month and age class
 Fm <- set_F(F = F, birth_month = birth_month) # by month
 
 # Hunting (by month)
@@ -33,7 +35,7 @@ Hscen <- get_hunting_scen(path = "./data/input/hunting_scenarios.xlsx")
 
 # Hunting scenarios are stored in a list of dataframes
 # Here we select some
-Hs <- Hscen[c("P_T1", "P_T2", "R_1", "A_1")]
+Hs <- Hscen[c("N", "P_T1", "P_T2", "R_1", "A_1")]
 
 # ----------------------------------------------------
 # ABM related parameters
@@ -63,19 +65,11 @@ head(scen1$result[[2]]$df_harvest)
 # process results
 #
 # Alle output (list) wordt bewaard in een tibble.
-# Met rbind_rows voegen we resultaten van vorige simulaties toe.
-scenN <- readRDS(file = "./data/interim/scen_N.RDS") #scenario no hunting
 
-scen <- scen1 %>%
-  bind_rows(scenN)
-scen
-
-df_num <- get_numboar(scen, df = "df_numboar")
+df_num <- get_numboar(scen1, df = "df_numboar")
 df_har <- get_numboar(scen1, df = "df_harvest")
 
 #----------------------------------------------------
-# plot
-
 # Number of individuals by hunting scenario
 df_num %>%
   group_by(date, Hs, sim) %>%
@@ -85,7 +79,6 @@ df_num %>%
             p10 = quantile(n, prob = 0.1), .groups = "drop") %>%
   ggplot(aes(x = date, group = Hs, linetype = Hs)) +
   geom_smooth(aes(y = mean, ymax = p90, ymin = p10), size = 0.5, stat = "identity")
-
 
 # Total harvest by age class and scenario
 df_har %>%
@@ -111,10 +104,9 @@ df_har %>%
   scale_x_date(date_labels =  "%Y")
 
 df_har %>%
-  filter(Hs == "A_1") %>%
+  filter(Hs == "P_T1") %>%
   group_by(date, agecl, sim) %>%
   summarise(n = n(), .groups = "drop_last") %>%
-  view()
   summarise(mean = mean(n),
             p90 = quantile(n, prob = 0.9),
             p10 = quantile(n, prob = 0.1)) %>%
@@ -136,19 +128,7 @@ df_har %>%
   ggplot(aes(x = time, y = n, linetype = Hs)) +
   geom_line()
 
-# Cumulative harvest by age class and scenario
-df_har %>%
-  group_by(agecl, Hs, time, sim) %>%
-  summarise(n = n(), .groups = "drop_last") %>%
-  summarise(mean = mean(n), .groups = "drop_last") %>%
-  ungroup() %>%
-  complete(time, Hs, agecl, fill = list(mean = 0)) %>%
-  group_by(agecl, Hs) %>%
-  mutate(n = cumsum(mean)) %>%
-  ggplot(aes(x = time, y = n, color = agecl, linetype = Hs)) +
-  geom_line()
-
-# Number of dependent juveniles by scenario
+# Mean number of dependent juveniles by scenario
 df_har %>%
   mutate(year = lubridate::year(date)) %>%
   group_by(Hs, year, sim) %>%
