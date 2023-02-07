@@ -46,7 +46,7 @@ init_pop <- set_init_pop(init_agecl = init_agecl,
 
 # run simulation and store results
 scen_8 <- sim_scen_boar(init_pop = init_pop,
-                        max_month = 4 * 12 + 1,
+                        n_month = 4 * 12 + 1,
                         start_month = 4,
                         nsim = 5,
                         Sm = S_toigo,    # variable survival -> matrix!!!

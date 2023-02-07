@@ -68,7 +68,7 @@ init_pop %>%
 #-----------------------------------------------------
 # run ABM model
 scen_h4_3 <- sim_scen_boar(init_pop = init_pop,
-                           max_month = max_year * 12 + 1,
+                           n_month = max_year * 12 + 1,
                            nsim = 5,
                            Sm = Sm,
                            Fm = Fm,
@@ -156,7 +156,7 @@ init_pop <- set_init_pop(init_agecl = init_agecl,
 
 # run simulation and store results
 scen_int <- sim_scen_boar(init_pop = init_pop,
-                          max_month = max_year * 12 + 1,
+                          n_month = max_year * 12 + 1,
                           nsim = 4,
                           Sm = Sm,
                           Fm = Fm,
@@ -206,7 +206,7 @@ names(Hsel) <- paste("P", df$agecl, df$Hy, sep = "_")  # give list elements a na
 
 # run simulation and store results
 scen_sel <- sim_scen_boar(init_pop = init_pop,
-                          max_month = max_year * 12 + 1,
+                          n_month = max_year * 12 + 1,
                           nsim = 4,
                           Sm = Sm,
                           Fm = Fm,
@@ -252,7 +252,7 @@ init_pop <- set_init_pop(init_agecl = init_agecl,
 
 # run simulation and store results
 scen_ch7 <- sim_scen_boar(init_pop = init_pop,
-                          max_month = max_year * 12 + 1,
+                          n_month = max_year * 12 + 1,
                           nsim = 5,
                           Sm = Sm,
                           Fm = Fm,

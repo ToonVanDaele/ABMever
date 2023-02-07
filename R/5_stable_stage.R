@@ -42,7 +42,7 @@ init_pop <- set_init_pop(init_agecl = init_agecl,
 
 # run simulation and store results
 scen_h1 <- sim_scen_boar(init_pop = init_pop,
-                          max_month = max_year * 12 + 1,
+                          n_month = max_year * 12 + 1,
                           nsim = 5,
                           Sm = Sm,
                           Fm = Fm,
@@ -96,7 +96,7 @@ N <- Hscen["N"]
 
 # run simulation and store results
 scen_h2 <- sim_scen_boar(init_pop = init_pop,
-                         max_month = 4 * 12 + 1,
+                         n_month = 4 * 12 + 1,
                          nsim = 5,
                          Sm = Sm,
                          Fm = Fm,
@@ -142,7 +142,7 @@ df_init_pop <- df_pop %>%
 # should be stable from the beginning
 
 scen_h3 <- sim_scen_boar(init_pop = df_init_pop,
-                         max_month = 10 * 12 + 1,
+                         n_month = 10 * 12 + 1,
                          nsim = 5,
                          Sm = Sm,
                          Fm = Fm,

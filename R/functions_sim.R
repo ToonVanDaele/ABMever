@@ -7,7 +7,7 @@
 # - three age classes (juvenile, yearling, adult)
 #
 # @param init_pop Initial population (vector 2 columns: age (months) & sex)
-# @param max_month number of months to simulate
+# @param n_month number of months to simulate
 # @param start_month month to start the simulation (1..12)
 # @param Sm monthly survival for each age class, sex and month (matrix [12x6])
 # @param Fm monthly fertility for each age class and month (matrix [12x3])
@@ -18,7 +18,7 @@
 #              df_harvest = individuals harvested (end of each time step)
 #              df_pop = individuals in population at the end of the simulation
 #
-sim_boar <- function(init_pop, max_month, start_month, Sm, Fm, Hm){
+sim_boar <- function(init_pop, n_month, start_month, Sm, Fm, Hm){
 
   require(NetLogoR)
 
@@ -31,7 +31,7 @@ sim_boar <- function(init_pop, max_month, start_month, Sm, Fm, Hm){
 
   hunt_type <- substr(names(Hm), 1, 1)  # Hunting type ('N', 'P', 'R' or 'A')
 
-  while (NLany(boar) & NLcount(boar) < 5000 & time <= max_month) {
+  while (NLany(boar) & NLcount(boar) < 5000 & time <= n_month) {
 
     tracknum[[time]] <- get_boar(boar) # track individuals in each age class
 
@@ -105,7 +105,7 @@ sim_boar <- function(init_pop, max_month, start_month, Sm, Fm, Hm){
 #---------------------------------------------------------
 # run simulation for 1 or more hunting scenarios
 #
-# @param max_month Number of months to simulate
+# @param n_month Number of months to simulate
 # @param init_pop Vector with initial population 2 columns: age (months) & sex
 # @param Sm Monthly survival: age class (vector) or ageclass, sex and month (matrix)
 # @param Fm Monthly fertility for each age class (vector length 3)
@@ -125,7 +125,7 @@ sim_boar <- function(init_pop, max_month, start_month, Sm, Fm, Hm){
 # R_ = hunting 2 step proportional: first by population a start month,
 #                                   second distributed by month, age class & sex
 
-sim_scen_boar <- function(init_pop, max_month, start_month = 1,
+sim_scen_boar <- function(init_pop, n_month, start_month = 1,
                           Sm, Fm, Hs, nsim){
 
   # Check if Sm is a matrix[12x6] if not -> convert to a matrix (12 x 3)
@@ -147,7 +147,7 @@ sim_scen_boar <- function(init_pop, max_month, start_month = 1,
     for (i in 1:nrow(df)) {
 
     outsim <- sim_boar(init_pop = init_pop,
-                       max_month = max_month,
+                       n_month = n_month,
                        start_month = start_month,
                        Sm = Sm,
                        Fm = Fm,

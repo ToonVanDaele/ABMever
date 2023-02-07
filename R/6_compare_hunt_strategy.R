@@ -45,7 +45,7 @@ init_pop <- set_init_pop(init_agecl = init_agecl,
 
 # run simulation and store results
 scen_7a <- sim_scen_boar(init_pop = init_pop,
-                         max_month = 4 * 12 + 1,
+                         n_month = 4 * 12 + 1,
                          nsim = 5,
                          Sm = Sm,
                          Fm = Fm,
@@ -66,7 +66,7 @@ df_init_pop <- df_pop %>%
 
 # We now run simulations with new hunting strategies
 scen_7b <- sim_scen_boar(init_pop = df_init_pop,
-                         max_month = 10 * 12 + 1,
+                         n_month = 10 * 12 + 1,
                          nsim = 5,
                          Sm = Sm,
                          Fm = Fm,
