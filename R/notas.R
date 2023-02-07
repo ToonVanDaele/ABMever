@@ -4,6 +4,10 @@
 # Lynn seintje geven wanneer een volledige werkende versie klaar is.
 
 # startmaand -> effect van initiele populatie?
+# Nieuwe functie toegevoegd leeftijd enkel op basis van gamma verdeling
+# beter voor variabele startmaand?
+# Bekijken of er enige invloed is.
+# Best standaard altijd een burn-in nemen van 4 à 5 jaar
 
 # abm simulaties -> overwegen om leeftijdsklassen volledig te laten vallen
 # en enkel te werken met de effectieve leeftijd (met een absoluut maximum vb. 15 jaar)
