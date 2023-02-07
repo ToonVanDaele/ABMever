@@ -73,37 +73,6 @@ set_init_pop <- function(init_agecl, birth_month, Sm, max_age = 180){
   return(init_pop)
 }
 
-#-------------------------------------------------------------------------
-# Set initial ages - uniform distribution for class 0 and 1
-set_init_pop2 <- function(init_agecl){
-
-  # We set a fixed (50/50) sex ratio for the initial population.
-  # This makes comparision with the (female only) matrix population model easier
-
-  # Initial sex can also be set randomly. Although this can initially create
-  # extra variability in the population. Stable sex ratio will only be reached
-  # after several years.
-
-  nb_f <- round(init_agecl / 2, 0)
-  nb_m <- round(init_agecl - nb_f, 0)
-  # first two age classes - uniform distributed
-  age_0 <- runif(n = round(init_agecl[1], 0),min = 1, max = 12)
-  sex_0 <- c(rep("F", nb_f[1]), rep("M", nb_m[1]))
-
-  age_1 <- runif(n = round(init_agecl[2], 0),min = 13, max = 24)
-  sex_1 <- c(rep("F", nb_f[2]), rep("M", nb_m[2]))
-
-  # adult geometric distribution
-  age_2 <- rgamma(n = round(init_agecl[3], 0), shape = 2, rate = 0.8) * 12 + 24
-  sex_2 <- c(rep("F", nb_f[3]), rep("M", nb_m[3]))
-
-  ages <- c(age_0, age_1, age_2)
-  sexes <- c(sex_0, sex_1, sex_2)
-
-  init_pop <- data.frame(age = ages, sex = sexes)
-
-  return(init_pop)
-}
 
 #----------------------------------------------------------------
 # Get summary of boar (population by age class, sex)
@@ -164,17 +133,13 @@ set_F <- function(F, birth_month){
 }
 
 #----------------------------------------------------------------------
-# Get geboortepiek
-#
-# Load geboortepiek as csv
+# Load 'geboortepiek' as csv
 #
 # @param csv_filename (string)
 #
 # @return data frame with percentage of births by month (12 rows)
 #
 get_birth_month <- function(csv_filename){
-
-#  filename <- "https://raw.githubusercontent.com/inbo/fis-projecten/305-rerun-geboortepiek/Grofwild/Populatiemodel-Everzwijn/Output/Geboortepiek/bp_results_1month.csv?token=GHSAT0AAAAAABYGSVSY725WYIFIZ4K4DKM6YZ23W6Q"
 
   df <- read.csv(file = csv_filename)
 
@@ -252,7 +217,6 @@ get_numboar <- function(mytb, df = "df_numboar"){
          Hs = as.factor(Hs))
   return(df_num)
 }
-
 
 #-------------------------------------------------------------
 # process output - get age distribution
