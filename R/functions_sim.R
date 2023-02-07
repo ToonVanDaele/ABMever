@@ -6,16 +6,16 @@
 # - time step is months
 # - three age classes (juvenile, yearling, adult)
 #
-# @param Initial population (vector 2 columns (age (months) & sex))
+# @param init_pop Initial population (vector 2 columns: age (months) & sex)
 # @param max_month number of months to simulate
 # @param start_month month to start the simulation (1..12)
-# @param Sm monthly survival for each age class, sex and month (matrix)
-# @param Fm monthly fertility for each age class and month (matrix)
-# @param Hm monthly hunting ratio or absolute hunting for each age class & sex (matrix)
+# @param Sm monthly survival for each age class, sex and month (matrix [12x6])
+# @param Fm monthly fertility for each age class and month (matrix [12x3])
+# @param Hm monthly hunting for each age class & sex (list with matrix [12 x 6 + 1])
 #
 # @return list with 3 data frames:
-#              df_numboar = number of individuals (start of time step)
-#              df_harvest = individuals harvested (end of time step)
+#              df_numboar = number of individuals (start of each time step)
+#              df_harvest = individuals harvested (end of each time step)
 #              df_pop = individuals in population at the end of the simulation
 #
 sim_boar <- function(init_pop, max_month, start_month, Sm, Fm, Hm){
@@ -103,25 +103,39 @@ sim_boar <- function(init_pop, max_month, start_month, Sm, Fm, Hm){
 
 
 #---------------------------------------------------------
-# run simulation for 1 or more scenarios
+# run simulation for 1 or more hunting scenarios
 #
 # @param max_month Number of months to simulate
 # @param init_pop Vector with initial population 2 columns: age (months) & sex
 # @param Sm Monthly survival: age class (vector) or ageclass, sex and month (matrix)
 # @param Fm Monthly fertility for each age class (vector length 3)
 # @param Hs Monthly hunting scenarios (list of matrices)
+#
+# @return a tibble
+#
+# The output is a tibble. One row for aach simulation (nsim x Hs).
+# The column 'result' contains a list with the model output.
+
+# Hs should be a named list of matrices ([12, 6 + 1])
+# The first character of the name defines the hunting type:
+#
+# N  = no hunting
+# P_ = hunting proportional by month, age class & sex
+# A_ = absolute number of harvest by month, age class & sex
+# R_ = hunting 2 step proportional: first by population a start month,
+#                                   second distributed by month, age class & sex
 
 sim_scen_boar <- function(init_pop, max_month, start_month = 1,
                           Sm, Fm, Hs, nsim){
 
-  # Check if Sm is a vector (length 3) -> make it a matrix (12 x 3)
+  # Check if Sm is a matrix[12x6] if not -> convert to a matrix (12 x 3)
   if (!is.matrix(Sm)) {
     Smm <- matrix(data = Sm, nrow = 12, ncol = 6, byrow = TRUE)
     colnames(Smm) <- c(paste0(ageclasses, "F"), paste0(ageclasses, "M"))
     Sm <- Smm
   }
 
-  # Create dataframe with simulations to run
+  # Create a tibble with all simulations to run
   df <- expand.grid(Hs = names(Hs),
                     sim = seq(from = 1, to = nsim),
                     result = list(NULL)) %>%
@@ -138,6 +152,7 @@ sim_scen_boar <- function(init_pop, max_month, start_month = 1,
                        Sm = Sm,
                        Fm = Fm,
                        Hm = Hs[df$Hs[i]])
+
     df$result[i] <- list(outsim)
 
     setTxtProgressBar(pb, value = i)
@@ -154,7 +169,7 @@ sim_scen_boar <- function(init_pop, max_month, start_month = 1,
 #
 # @param init_pop initial population. matrix with 2 columns (age & sex)
 #
-# @return netlogo population with age, sex, newb and offspring
+# @return netlogo population with age, sex, newb, offspring and age_class
 #
 abm_init_m <- function(init_pop){
 
@@ -166,28 +181,17 @@ abm_init_m <- function(init_pop){
                         world = world,
                         breed = "wildboar",
                         color = rep("red", nb))
-  boar <- turtlesOwn(turtles = boar,
-                     tVar = "sex",
-                     tVal = init_pop$sex)
-  boar <- turtlesOwn(turtles = boar,
-                     tVar = "age",
-                     tVal = init_pop$age)
-  boar <- turtlesOwn(turtles = boar,
-                     tVar = "newb",
-                     tVal = 99)
-  boar <- turtlesOwn(turtles = boar,
-                     tVar = "offspring",
-                     tVal = 0)
+  boar <- turtlesOwn(turtles = boar, tVar = "sex", tVal = init_pop$sex)
+  boar <- turtlesOwn(turtles = boar, tVar = "age", tVal = init_pop$age)
+  boar <- turtlesOwn(turtles = boar, tVar = "newb", tVal = 99)
+  boar <- turtlesOwn(turtles = boar, tVar = "offspring", tVal = 0)
+  boar <- turtlesOwn(turtles = boar, tVar = "agecl", tVal = 0)
 
-  init_age_cl <- init_pop$age %>%
-    as.data.frame() %>%
-    mutate(agecl = case_when(. > 24 ~ 2,
-                             . > 12 ~ 1,
-                             TRUE ~ 0)) %>%
-    pull(agecl)
+  # Set agecl
+  boar@.Data[turtles$age <= 12, "agecl"] <- 0
+  boar@.Data[turtles$age > 12, "agecl"] <- 1
+  boar@.Data[turtles$age > 24, "agecl"] <- 2
 
-  boar <- turtlesOwn(turtles = boar, tVar = "agecl",
-                     tVal = init_age_cl)
   return(boar)
 }
 
