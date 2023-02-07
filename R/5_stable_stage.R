@@ -176,3 +176,42 @@ df_num %>%
   ggplot(aes(x = time, y = mean_rel_n, colour = agecl, shape = Hs)) + geom_line() +
   geom_point() + geom_errorbar(aes(ymax = p90, ymin = p10))
 
+# Age distribution at the end of simulation
+
+df_plot_init <- init_pop %>%
+  mutate(n_age = round(age, 0)) %>%
+  group_by(n_age) %>%
+  summarise(n = n(), .groups = "drop_last") %>%
+  mutate(p = n / sum(n))
+
+df_pop <- get_pop(mytb = scen_h3)
+
+df_pop %>%
+  group_by(sim, age) %>%
+  summarise(n = n(), .groups = "drop_last") %>%
+  mutate(p = n / sum(n)) %>%
+  group_by(age) %>%
+  summarise(p_mean = mean(p),
+            p90 = quantile(p, prob = 0.9),
+            p10 = quantile(p, prob = 0.1), .groups = "drop") %>%
+  ggplot(aes(x = age, y = p_mean)) + geom_point() +
+    geom_errorbar(aes(ymax = p90, ymin = p10)) +
+    geom_point(data = df_plot_init, aes(x = n_age, y = p), color = "blue")
+
+df_gamma <- data.frame(age = rgamma(n = 1000, shape = 1, rate = 1) * 12) %>%
+  mutate(n_age = round(age, 0)) %>%
+  group_by(n_age) %>%
+  summarise(n = n(), .groups = "drop_last") %>%
+  mutate(p = n / sum(n))
+
+df_pop %>%
+  group_by(sim, age) %>%
+  summarise(n = n(), .groups = "drop_last") %>%
+  mutate(p = n / sum(n)) %>%
+  group_by(age) %>%
+  summarise(p_mean = mean(p),
+            p90 = quantile(p, prob = 0.9),
+            p10 = quantile(p, prob = 0.1), .groups = "drop") %>%
+  ggplot(aes(x = age, y = p_mean)) + geom_point() +
+  geom_errorbar(aes(ymax = p90, ymin = p10)) +
+  geom_point(data = df_gamma, aes(x = n_age, y = p), color = 'blue')

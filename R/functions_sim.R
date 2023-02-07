@@ -1,10 +1,8 @@
-# ABM functions
-#
 #----------------------------------------------------------------------
-# Run a single ABM simulation
+# A single ABM simulation
 #
 # - time step is months
-# - three age classes (juvenile, yearling, adult)
+# - 3 age classes (juvenile, yearling, adult)
 #
 # @param init_pop Initial population (vector 2 columns: age (months) & sex)
 # @param n_month number of months to simulate
@@ -17,7 +15,7 @@
 #              df_numboar = number of individuals (start of each time step)
 #              df_harvest = individuals harvested (end of each time step)
 #              df_pop = individuals in population at the end of the simulation
-#
+
 sim_boar <- function(init_pop, n_month, start_month, Sm, Fm, Hm){
 
   require(NetLogoR)
@@ -35,20 +33,24 @@ sim_boar <- function(init_pop, n_month, start_month, Sm, Fm, Hm){
 
     tracknum[[time]] <- get_boar(boar) # track individuals in each age class
 
-    # Get the number of boars each year at start month (used for 'R' hunting)
+    # The number of boars each year at start month (used by hunting type 'R')
     if (month == start_month) st_b <- NLcount(boar)
 
     # natural mortality
-    boar <- mortality(turtles = boar, S = Sm[month,])
+    boar <- mortality(turtles = boar,
+                      S = Sm[month,])
 
     # reproduction
-    boar <- reproduce(turtles = boar, F = Fm[month,])
+    boar <- reproduce(turtles = boar,
+                      F = Fm[month,])
 
     # hunting
-    who_dies <- hunt(turtles = boar, H = Hm[[1]][month,],
-                     hunt_type = hunt_type, st_b = st_b)
+    who_dies <- hunt(turtles = boar,
+                     H = Hm[[1]][month,],
+                     hunt_type = hunt_type,
+                     st_b = st_b)
     harvest <- NLwith(agents = boar, var = "who", val = who_dies)
-    trackhunt[[time]] <- get_boar_harvest(turtles = harvest) # track hunted
+    trackhunt[[time]] <- get_boar_harvest(turtles = harvest) # track hunted individuals
     boar <- die(turtles = boar, who = who_dies) # remove hunted from population
 
     # aging
@@ -67,14 +69,11 @@ sim_boar <- function(init_pop, n_month, start_month, Sm, Fm, Hm){
   # Set start date
   g <- lubridate::make_date(year = 0, month = start_month, day = 1)
 
-  # Number of individuals
+  # Number of individuals by age class, sex, date
   df_numboar <- tracknum %>%
     map_dfr(rbind, .id = "time") %>%
     mutate(time = as.integer(time)) %>%
     mutate(date = lubridate::add_with_rollback(g, months(time - 1)))
-
-    # mutate(month = as.integer(lubridate::month(date)),  # is dit nog nodig?
-    #        year = as.integer(lubridate::year(date)))    # alles zit in date
 
   # harvested individuals
   df_harvest <- trackhunt %>%
@@ -84,11 +83,9 @@ sim_boar <- function(init_pop, n_month, start_month, Sm, Fm, Hm){
   if (!nrow(df_harvest) == 0) {
       df_harvest <- df_harvest %>%
       mutate(date = lubridate::add_with_rollback(g, months(time - 1)))
-      # mutate(month = as.integer(lubridate::month(date)),
-      #        year = as.integer(lubridate::year(date)))
   }
 
-  # store the whole population after the final simulation time step
+  # Save the whole population at the final simulation time step in a dataframe
   df_pop <- boar@.Data %>%
     as.data.frame() %>%
     dplyr::select(who, breed, sex, age, newb, offspring) %>%
@@ -188,9 +185,9 @@ abm_init_m <- function(init_pop){
   boar <- turtlesOwn(turtles = boar, tVar = "agecl", tVal = 0)
 
   # Set agecl
-  boar@.Data[turtles$age <= 12, "agecl"] <- 0
-  boar@.Data[turtles$age > 12, "agecl"] <- 1
-  boar@.Data[turtles$age > 24, "agecl"] <- 2
+  boar@.Data[boar$age <= 12, "agecl"] <- 0
+  boar@.Data[boar$age > 12, "agecl"] <- 1
+  boar@.Data[boar$age > 24, "agecl"] <- 2
 
   return(boar)
 }
@@ -235,7 +232,7 @@ mortality <- function(turtles, S) {
 hunt <- function(turtles, H, hunt_type = "P", st_b = NULL) {
 
   switch(hunt_type,
-         P = {   # hunting proportions through year by class & sex
+         P = {   # hunting proportions month by month for age class & sex
 
            # Select wildboars only (newborns of the month are not hunted)
            t2 <- NLwith(agents = turtles, var = "breed", val = "wildboar")

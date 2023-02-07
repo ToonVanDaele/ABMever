@@ -2,7 +2,6 @@
 # tussen jacht het hele jaar door en een beperkt jachtseizoen.
 
 library(tidyverse)
-library(NetLogoR)
 library(popbio)
 source("R/functions.R")
 source("R/functions_sim.R")
@@ -34,15 +33,12 @@ names(Hscen)
 # Select "N"
 H0 <- Hscen["N"]  # Select hunting scenario 'N'
 
-# Run an ABM simulation for 4 years, required to find stable stage distribution
-
-# Create projection matrix without hunting (for stable stage as initial guess)
+# Create projection matrix without hunting (for stable ages as initial guess)
 mat <- set_projmat_post(S = S, F = F, H = c(0, 0, 0))
 init_agecl <- stable.stage(mat$mat) * nboar0     # Stable stage distribution
 # Initial population (age, sex)
 init_pop <- set_init_pop(init_agecl = init_agecl,
                          birth_month = birth_month, Sm = Sm)
-
 # run simulation and store results
 scen_7a <- sim_scen_boar(init_pop = init_pop,
                          n_month = 4 * 12 + 1,
@@ -54,9 +50,9 @@ scen_7a <- sim_scen_boar(init_pop = init_pop,
 saveRDS(scen_7a, file = "./data/interim/scen_7a.RDS")
 #scen_7a <- readRDS(file = "./data/interim/scen_7a.RDS")
 
-# Get the end population of the ABM simulation
+# Get the end population of the 4 year ABM simulations
 # and sample 1000 individuals as initial population
-# Sample is taken from all 5 repeated simulations
+# Sample is taken from all 5 repeated simulations togheter
 
 df_pop <- get_pop(scen_7a)
 
