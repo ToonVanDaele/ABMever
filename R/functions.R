@@ -73,6 +73,33 @@ set_init_pop <- function(init_agecl, birth_month, Sm, max_age = 180){
   return(init_pop)
 }
 
+#---------------------------------------------------------------------------
+set_init_pop2 <- function(n, max_age = 180){
+
+  # This function sets distribution of initial ages for the ABM boar model.
+  # The ages are choosen from a gamma distribution with fixed shapes
+  # @param n size initial population
+  # @param max_age Maximum age (default = 180 months)
+  #
+  # @return Dataframe with 2 columns (age, sex) and one row per individual
+
+  # Age from a geometric distribution - maximum is max_age
+  ages <- round(rgamma(n = n, shape = 1, rate = 1) * 12, 0)
+  # While values > max age exist -> choose new values from the distribution
+  while (length(ages[ages > max_age]) > 0) {
+    new_values <- rgamma(n = length(ages[ages > max_age]),
+                         shape = 1, rate = 1) * 12
+    ages[ages > max_age] <- new_values
+  }
+
+  ages_sex <- c(rep("F", round(n / 2, 0)),
+                   rep("M", n - round(n / 2, 0)))
+  init_pop <- data.frame(age = ages, sex = ages_sex)
+
+  return(init_pop)
+}
+
+
 
 #----------------------------------------------------------------
 # Get summary of boar (population by age class, sex)
