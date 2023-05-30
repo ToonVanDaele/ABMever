@@ -1,5 +1,6 @@
 # Compare population matrix and individual based model
 
+
 # This script compares the results of both approaches with
 # similar population parameters
 
