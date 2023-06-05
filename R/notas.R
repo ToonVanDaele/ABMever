@@ -1,7 +1,9 @@
 
 # Nog te doen:
 
-# Lynn seintje geven wanneer een volledige werkende versie klaar is.
+
+# uitleg toevoegen over de exclbestanden. Overleving en jachtdruk moeten
+# meer uitleg over hoe dit uit te rekenen.
 
 # startmaand -> effect van initiele populatie?
 # Nieuwe functie toegevoegd leeftijd enkel op basis van gamma verdeling
